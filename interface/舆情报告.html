@@ -1,0 +1,2168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>舆情洞察 - 舆情报告</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#2A5CAA",
+              secondary: "#F5F7FA",
+            },
+            borderRadius: {
+              none: "0px",
+              sm: "4px",
+              DEFAULT: "8px",
+              md: "12px",
+              lg: "16px",
+              xl: "20px",
+              "2xl": "24px",
+              "3xl": "32px",
+              full: "9999px",
+              button: "8px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :where([class^="ri-"])::before { content: "\f3c2"; }
+      body {
+      font-family: 'Noto Sans SC', sans-serif;
+      }
+      .nav-link {
+      position: relative;
+      }
+      .nav-link::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -2px;
+      left: 0;
+      background-color: #2A5CAA;
+      transition: width 0.3s ease;
+      }
+      .nav-link:hover::after {
+      width: 100%;
+      }
+      .nav-link.active::after {
+      display: none;
+      }
+      .tool-card {
+      transition: all 0.3s ease;
+      }
+      .tool-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+      .report-card {
+      transition: all 0.3s ease;
+      }
+      .report-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+      .ripple {
+      position: relative;
+      overflow: hidden;
+      }
+      .ripple::after {
+      content: "";
+      display: block;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+      background-repeat: no-repeat;
+      background-position: 50%;
+      transform: scale(10, 10);
+      opacity: 0;
+      transition: transform 0.5s, opacity 1s;
+      }
+      .ripple:active::after {
+      transform: scale(0, 0);
+      opacity: 0.3;
+      transition: 0s;
+      }
+      @keyframes slideIn {
+      from {
+      transform: translateX(-20px);
+      opacity: 0;
+      }
+      to {
+      transform: translateX(0);
+      opacity: 1;
+      }
+      }
+      .sidebar-animation {
+      animation: slideIn 0.3s forwards;
+      }
+      .custom-checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #d1d5db;
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      }
+      .custom-checkbox:checked {
+      background-color: #2A5CAA;
+      border-color: #2A5CAA;
+      }
+      .custom-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 6px;
+      width: 4px;
+      height: 8px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      }
+      .custom-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+      }
+      .custom-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      }
+      .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+      }
+      .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+      }
+      input:checked + .switch-slider {
+      background-color: #2A5CAA;
+      }
+      input:checked + .switch-slider:before {
+      transform: translateX(20px);
+      }
+      .custom-radio {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #d1d5db;
+      border-radius: 50%;
+      outline: none;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      }
+      .custom-radio:checked {
+      border-color: #2A5CAA;
+      }
+      .custom-radio:checked::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #2A5CAA;
+      }
+      @media (max-width: 768px) {
+      .tool-text {
+      display: none;
+      }
+      .sidebar {
+      width: 80px;
+      }
+      .nav-icon {
+      transform: scale(0.8);
+      }
+      }
+    </style>
+  </head>
+  <body class="bg-secondary min-h-screen">
+    <!-- 顶部导航栏 -->
+    <nav
+      class="fixed top-0 left-0 right-0 bg-white shadow-md z-50 px-8 py-3 flex items-center justify-between"
+    >
+      <!-- 左侧品牌标识 -->
+      <div class="flex items-center">
+        <h1 class="text-primary font-bold text-xl ml-[30px]">舆情洞察</h1>
+      </div>
+      <!-- 中部导航按钮 -->
+      <div class="flex space-x-8">
+        <a
+          href="主页.html"
+          class="nav-link text-gray-700 hover:text-primary px-4 py-2 whitespace-nowrap"
+          >首页</a
+        >
+        <a
+          href="数据分析.html"
+          data-readdy="true"
+          class="nav-link text-gray-700 hover:text-primary px-4 py-2 whitespace-nowrap"
+          >数据分析</a
+        >
+        <a
+          href="舆情报告.html"
+          class="nav-link active bg-primary text-white px-4 py-2 rounded-button !rounded-button whitespace-nowrap"
+          >舆情报告</a
+        >
+      </div>
+      <!-- 右侧功能图标 -->
+      <div class="flex items-center space-x-[15px]">
+        <button
+          class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple"
+        >
+          <i class="ri-message-2-line ri-lg"></i>
+        </button>
+        <button
+          class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple"
+        >
+          <i class="ri-settings-3-line ri-lg"></i>
+        </button>
+      </div>
+    </nav>
+    <!-- 主体内容 -->
+    <div class="flex pt-[72px]">
+      <!-- 左侧边栏 -->
+      <aside
+        class="sidebar w-[280px] bg-white p-5 shadow-sm h-[calc(100vh-72px)] overflow-auto"
+      >
+        <h2 class="text-gray-800 font-bold mb-4 sidebar-animation">舆情工具</h2>
+        <!-- 工具卡片组 -->
+        <div class="space-y-4">
+          <div
+            class="tool-card bg-white rounded shadow p-4 sidebar-animation"
+            style="animation-delay: 0.1s"
+          >
+            <div class="flex items-center">
+              <div
+                class="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-full text-primary"
+              >
+                <i class="ri-alarm-warning-line ri-lg"></i>
+              </div>
+              <span class="tool-text ml-3 text-gray-800">监测预警</span>
+            </div>
+          </div>
+          <div
+            class="tool-card bg-white rounded shadow p-4 sidebar-animation"
+            style="animation-delay: 0.2s"
+          >
+            <div class="flex items-center">
+              <div
+                class="w-10 h-10 flex items-center justify-center bg-green-100 rounded-full text-green-600"
+              >
+                <i class="ri-emotion-line ri-lg"></i>
+              </div>
+              <span class="tool-text ml-3 text-gray-800">情感分析</span>
+            </div>
+          </div>
+          <div
+            class="tool-card bg-white rounded shadow p-4 sidebar-animation"
+            style="animation-delay: 0.3s"
+          >
+            <div class="flex items-center">
+              <div
+                class="w-10 h-10 flex items-center justify-center bg-orange-100 rounded-full text-orange-600"
+              >
+                <i class="ri-fire-line ri-lg"></i>
+              </div>
+              <span class="tool-text ml-3 text-gray-800">热点追踪</span>
+            </div>
+          </div>
+          <div
+            class="tool-card bg-white rounded shadow p-4 sidebar-animation"
+            style="animation-delay: 0.4s"
+          >
+            <div class="flex items-center">
+              <div
+                class="w-10 h-10 flex items-center justify-center bg-purple-100 rounded-full text-purple-600"
+              >
+                <i class="ri-share-forward-line ri-lg"></i>
+              </div>
+              <span class="tool-text ml-3 text-gray-800">转发分析</span>
+            </div>
+          </div>
+        </div>
+        <h2 class="text-gray-800 font-bold mt-8 mb-4 sidebar-animation">
+          快捷操作
+        </h2>
+        <div class="space-y-4">
+          <div
+            class="tool-card bg-white rounded shadow p-4 sidebar-animation"
+            style="animation-delay: 0.5s"
+          >
+            <div class="flex items-center">
+              <div
+                class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-full text-red-600"
+              >
+                <i class="ri-file-chart-line ri-lg"></i>
+              </div>
+              <span class="tool-text ml-3 text-gray-800">生成报告</span>
+            </div>
+          </div>
+          <div
+            class="tool-card bg-white rounded shadow p-4 sidebar-animation"
+            style="animation-delay: 0.6s"
+          >
+            <div class="flex items-center">
+              <div
+                class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-full text-indigo-600"
+              >
+                <i class="ri-database-2-line ri-lg"></i>
+              </div>
+              <span class="tool-text ml-3 text-gray-800">数据导出</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <!-- 主内容区 -->
+      <main class="flex-grow p-6">
+        <div class="mb-6 flex justify-between items-center">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800">舆情报告</h1>
+            <p class="text-gray-600">最近更新：2025-04-19</p>
+          </div>
+          <div class="flex space-x-4">
+            <div class="relative">
+              <input
+                type="text"
+                placeholder="搜索报告"
+                class="pl-10 pr-4 py-2 border border-gray-200 rounded-button focus:outline-none focus:border-primary text-sm"
+              />
+              <i
+                class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              ></i>
+            </div>
+            <button
+              class="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-button hover:bg-primary/90 !rounded-button whitespace-nowrap"
+            >
+              <i class="ri-add-line"></i>
+              <span>新建报告</span>
+            </button>
+          </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div class="flex items-center space-x-6 mb-6">
+            <div class="flex-1">
+              <label class="block text-sm text-gray-600 mb-2">时间范围</label>
+              <div class="flex items-center space-x-2">
+                <input
+                  type="date"
+                  class="px-3 py-2 border border-gray-200 rounded-button text-sm w-full"
+                  value="2025-04-12"
+                />
+                <span class="text-gray-400">至</span>
+                <input
+                  type="date"
+                  class="px-3 py-2 border border-gray-200 rounded-button text-sm w-full"
+                  value="2025-04-26"
+                />
+              </div>
+            </div>
+            <div class="flex-1">
+              <label class="block text-sm text-gray-600 mb-2">报告类型</label>
+              <div class="relative">
+                <div class="relative">
+                  <select
+                    class="appearance-none px-3 py-2 pr-8 border border-gray-200 rounded-button text-sm w-full"
+                  >
+                    <option>全部类型</option>
+                    <option>日常监测</option>
+                    <option>危机分析</option>
+                    <option>热点解读</option>
+                    <option>竞品分析</option>
+                    <option>自定义报告</option>
+                  </select>
+                  <i
+                    class="ri-arrow-down-s-line absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  ></i>
+                </div>
+              </div>
+            </div>
+            <div class="flex-1">
+              <label class="block text-sm text-gray-600 mb-2">状态</label>
+              <div class="relative">
+                <div class="relative">
+                  <select
+                    class="appearance-none px-3 py-2 pr-8 border border-gray-200 rounded-button text-sm w-full"
+                  >
+                    <option>全部状态</option>
+                    <option>已完成</option>
+                    <option>生成中</option>
+                    <option>草稿</option>
+                  </select>
+                  <i
+                    class="ri-arrow-down-s-line absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  ></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex space-x-4">
+            <button
+              class="px-6 py-2 bg-primary text-white rounded-button hover:bg-primary/90 !rounded-button whitespace-nowrap"
+            >
+              应用筛选
+            </button>
+            <button
+              class="px-6 py-2 border border-gray-200 text-gray-600 rounded-button hover:border-gray-300 !rounded-button whitespace-nowrap"
+            >
+              重置
+            </button>
+          </div>
+        </div>
+        <!-- 报告统计卡片 -->
+        <div class="grid grid-cols-4 gap-6 mb-8">
+          <div class="bg-white rounded-lg shadow p-5">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm">报告总数</p>
+                <h3 class="text-2xl font-bold text-gray-800 mt-1">48</h3>
+                <p class="text-green-500 text-sm mt-1">
+                  <i class="ri-arrow-up-line ri-sm align-middle"></i>
+                  <span>4 份较上月</span>
+                </p>
+              </div>
+              <div
+                class="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-full text-primary"
+              >
+                <i class="ri-file-list-3-line ri-lg"></i>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow p-5">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm">本月新增</p>
+                <h3 class="text-2xl font-bold text-gray-800 mt-1">12</h3>
+                <p class="text-green-500 text-sm mt-1">
+                  <i class="ri-arrow-up-line ri-sm align-middle"></i>
+                  <span>25% 较上月</span>
+                </p>
+              </div>
+              <div
+                class="w-10 h-10 flex items-center justify-center bg-green-100 rounded-full text-green-600"
+              >
+                <i class="ri-file-add-line ri-lg"></i>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow p-5">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm">分享次数</p>
+                <h3 class="text-2xl font-bold text-gray-800 mt-1">156</h3>
+                <p class="text-green-500 text-sm mt-1">
+                  <i class="ri-arrow-up-line ri-sm align-middle"></i>
+                  <span>12% 较上月</span>
+                </p>
+              </div>
+              <div
+                class="w-10 h-10 flex items-center justify-center bg-orange-100 rounded-full text-orange-600"
+              >
+                <i class="ri-share-line ri-lg"></i>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow p-5">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm">下载次数</p>
+                <h3 class="text-2xl font-bold text-gray-800 mt-1">89</h3>
+                <p class="text-green-500 text-sm mt-1">
+                  <i class="ri-arrow-up-line ri-sm align-middle"></i>
+                  <span>8% 较上月</span>
+                </p>
+              </div>
+              <div
+                class="w-10 h-10 flex items-center justify-center bg-purple-100 rounded-full text-purple-600"
+              >
+                <i class="ri-download-line ri-lg"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 报告列表 -->
+        <div class="bg-white rounded-md shadow-sm mb-6">
+          <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="font-bold text-gray-800">报告列表</h3>
+            <div class="flex items-center space-x-3">
+              <div class="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="select-all"
+                  class="custom-checkbox"
+                />
+                <label for="select-all" class="text-sm text-gray-600"
+                  >全选</label
+                >
+              </div>
+              <button
+                class="text-sm text-gray-600 hover:text-primary flex items-center !rounded-button whitespace-nowrap"
+              >
+                <i class="ri-delete-bin-line mr-1"></i> 批量删除
+              </button>
+              <button
+                class="text-sm text-gray-600 hover:text-primary flex items-center !rounded-button whitespace-nowrap"
+              >
+                <i class="ri-download-line mr-1"></i> 批量下载
+              </button>
+            </div>
+          </div>
+          <div class="p-4">
+            <div class="overflow-x-auto">
+              <table class="min-w-full">
+                <thead>
+                  <tr class="bg-gray-50">
+                    <th
+                      class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[50px]"
+                    ></th>
+                    <th
+                      class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      报告标题
+                    </th>
+                    <th
+                      class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      生成时间
+                    </th>
+                    <th
+                      class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      报告类型
+                    </th>
+                    <th
+                      class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      状态
+                    </th>
+                    <th
+                      class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      操作
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4">
+                      <input type="checkbox" class="custom-checkbox" />
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded text-primary mr-3"
+                        >
+                          <i class="ri-file-chart-2-line"></i>
+                        </div>
+                        <div>
+                          <p class="text-sm font-medium text-gray-800">
+                            4 月产品舆情月度报告
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            包含情感分析、热点话题、传播路径
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">
+                      2025-04-26 14:30
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">月度监测</td>
+                    <td class="py-3 px-4">
+                      <span
+                        class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                        >已完成</span
+                      >
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                      <div class="flex space-x-2">
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="预览"
+                        >
+                          <i class="ri-eye-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="下载"
+                        >
+                          <i class="ri-download-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="分享"
+                        >
+                          <i class="ri-share-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="删除"
+                        >
+                          <i class="ri-delete-bin-line"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4">
+                      <input type="checkbox" class="custom-checkbox" />
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 flex items-center justify-center bg-red-100 rounded text-red-600 mr-3"
+                        >
+                          <i class="ri-file-warning-line"></i>
+                        </div>
+                        <div>
+                          <p class="text-sm font-medium text-gray-800">
+                            新品发布负面舆情分析报告
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            针对新品上市后出现的负面评价进行分析
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">
+                      2025-04-24 09:15
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">危机分析</td>
+                    <td class="py-3 px-4">
+                      <span
+                        class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                        >已完成</span
+                      >
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                      <div class="flex space-x-2">
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="预览"
+                        >
+                          <i class="ri-eye-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="下载"
+                        >
+                          <i class="ri-download-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="分享"
+                        >
+                          <i class="ri-share-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="删除"
+                        >
+                          <i class="ri-delete-bin-line"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4">
+                      <input type="checkbox" class="custom-checkbox" />
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 flex items-center justify-center bg-orange-100 rounded text-orange-600 mr-3"
+                        >
+                          <i class="ri-fire-line"></i>
+                        </div>
+                        <div>
+                          <p class="text-sm font-medium text-gray-800">
+                            行业热点事件解读报告
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            解读近期行业热点事件及影响分析
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">
+                      2025-04-20 16:45
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">热点解读</td>
+                    <td class="py-3 px-4">
+                      <span
+                        class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                        >已完成</span
+                      >
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                      <div class="flex space-x-2">
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="预览"
+                        >
+                          <i class="ri-eye-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="下载"
+                        >
+                          <i class="ri-download-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="分享"
+                        >
+                          <i class="ri-share-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="删除"
+                        >
+                          <i class="ri-delete-bin-line"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4">
+                      <input type="checkbox" class="custom-checkbox" />
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 flex items-center justify-center bg-purple-100 rounded text-purple-600 mr-3"
+                        >
+                          <i class="ri-bar-chart-grouped-line"></i>
+                        </div>
+                        <div>
+                          <p class="text-sm font-medium text-gray-800">
+                            竞品舆情对比分析报告
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            与主要竞争对手的舆情表现对比分析
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">
+                      2025-04-18 10:30
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">竞品分析</td>
+                    <td class="py-3 px-4">
+                      <span
+                        class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                        >已完成</span
+                      >
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                      <div class="flex space-x-2">
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="预览"
+                        >
+                          <i class="ri-eye-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="下载"
+                        >
+                          <i class="ri-download-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="分享"
+                        >
+                          <i class="ri-share-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="删除"
+                        >
+                          <i class="ri-delete-bin-line"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4">
+                      <input type="checkbox" class="custom-checkbox" />
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 flex items-center justify-center bg-indigo-100 rounded text-indigo-600 mr-3"
+                        >
+                          <i class="ri-file-chart-line"></i>
+                        </div>
+                        <div>
+                          <p class="text-sm font-medium text-gray-800">
+                            品牌声誉季度分析报告
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            品牌整体声誉分析及趋势预测
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">
+                      2025-04-15 14:20
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">季度报告</td>
+                    <td class="py-3 px-4">
+                      <span
+                        class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                        >已完成</span
+                      >
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                      <div class="flex space-x-2">
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="预览"
+                        >
+                          <i class="ri-eye-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="下载"
+                        >
+                          <i class="ri-download-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="分享"
+                        >
+                          <i class="ri-share-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="删除"
+                        >
+                          <i class="ri-delete-bin-line"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4">
+                      <input type="checkbox" class="custom-checkbox" />
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 flex items-center justify-center bg-yellow-100 rounded text-yellow-600 mr-3"
+                        >
+                          <i class="ri-file-edit-line"></i>
+                        </div>
+                        <div>
+                          <p class="text-sm font-medium text-gray-800">
+                            用户反馈专题分析报告
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            针对用户反馈的专题分析
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">
+                      2025-04-26 11:20
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">专题分析</td>
+                    <td class="py-3 px-4">
+                      <span
+                        class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full"
+                        >生成中</span
+                      >
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                      <div class="flex space-x-2">
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-400 cursor-not-allowed rounded !rounded-button whitespace-nowrap"
+                          title="生成中"
+                        >
+                          <i class="ri-eye-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-400 cursor-not-allowed rounded !rounded-button whitespace-nowrap"
+                          title="生成中"
+                        >
+                          <i class="ri-download-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-400 cursor-not-allowed rounded !rounded-button whitespace-nowrap"
+                          title="生成中"
+                        >
+                          <i class="ri-share-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="删除"
+                        >
+                          <i class="ri-delete-bin-line"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4">
+                      <input type="checkbox" class="custom-checkbox" />
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded text-gray-600 mr-3"
+                        >
+                          <i class="ri-draft-line"></i>
+                        </div>
+                        <div>
+                          <p class="text-sm font-medium text-gray-800">
+                            营销活动舆情追踪报告
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            追踪分析最新营销活动的舆情反响
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">
+                      2025-04-25 16:40
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-700">活动分析</td>
+                    <td class="py-3 px-4">
+                      <span
+                        class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full"
+                        >草稿</span
+                      >
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                      <div class="flex space-x-2">
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="编辑"
+                        >
+                          <i class="ri-edit-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="生成"
+                        >
+                          <i class="ri-play-line"></i>
+                        </button>
+                        <button
+                          class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded !rounded-button whitespace-nowrap"
+                          title="删除"
+                        >
+                          <i class="ri-delete-bin-line"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-4 flex justify-between items-center">
+              <div class="text-sm text-gray-600">显示 1-7 共 48 条</div>
+              <div class="flex space-x-2">
+                <button
+                  class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded text-gray-600 hover:border-primary hover:text-primary !rounded-button whitespace-nowrap"
+                >
+                  <i class="ri-arrow-left-s-line"></i>
+                </button>
+                <button
+                  class="w-8 h-8 flex items-center justify-center border border-primary bg-primary rounded text-white !rounded-button whitespace-nowrap"
+                >
+                  1
+                </button>
+                <button
+                  class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded text-gray-600 hover:border-primary hover:text-primary !rounded-button whitespace-nowrap"
+                >
+                  2
+                </button>
+                <button
+                  class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded text-gray-600 hover:border-primary hover:text-primary !rounded-button whitespace-nowrap"
+                >
+                  3
+                </button>
+                <button
+                  class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded text-gray-600 hover:border-primary hover:text-primary !rounded-button whitespace-nowrap"
+                >
+                  <i class="ri-arrow-right-s-line"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 最近报告 -->
+        <div class="bg-white rounded-md shadow-sm">
+          <div class="p-4 border-b">
+            <h3 class="font-bold text-gray-800">最近查看的报告</h3>
+          </div>
+          <div class="p-4">
+            <div class="grid grid-cols-3 gap-6">
+              <div
+                class="report-card border border-gray-100 rounded-lg overflow-hidden shadow-sm"
+              >
+                <div class="h-40 bg-gray-100 relative">
+                  <img
+                    src="https://readdy.ai/api/search-image?query=a%20professional%20business%20report%20with%20charts%20and%20graphs%2C%20clean%20design%2C%20blue%20theme%2C%20corporate%20style%2C%20data%20visualization&width=400&height=200&seq=1&orientation=landscape"
+                    alt="报告预览"
+                    class="w-full h-full object-cover object-top"
+                  />
+                  <div
+                    class="absolute top-3 right-3 bg-white rounded-full p-1 shadow"
+                  >
+                    <span
+                      class="w-6 h-6 flex items-center justify-center text-green-600"
+                    >
+                      <i class="ri-file-chart-2-line"></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="p-4">
+                  <h4 class="font-medium text-gray-800 mb-1">
+                    4 月产品舆情月度报告
+                  </h4>
+                  <p class="text-xs text-gray-500 mb-3">
+                    查看时间：2025-04-26 15:40
+                  </p>
+                  <div class="flex justify-between items-center">
+                    <span
+                      class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full"
+                      >已完成</span
+                    >
+                    <div class="flex space-x-1">
+                      <button
+                        class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full !rounded-button whitespace-nowrap"
+                        title="预览"
+                      >
+                        <i class="ri-eye-line"></i>
+                      </button>
+                      <button
+                        class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full !rounded-button whitespace-nowrap"
+                        title="下载"
+                      >
+                        <i class="ri-download-line"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="report-card border border-gray-100 rounded-lg overflow-hidden shadow-sm"
+              >
+                <div class="h-40 bg-gray-100 relative">
+                  <img
+                    src="https://readdy.ai/api/search-image?query=a%20crisis%20management%20report%20with%20warning%20signs%2C%20red%20highlights%2C%20analytical%20charts%20showing%20negative%20trends%2C%20professional%20business%20document&width=400&height=200&seq=2&orientation=landscape"
+                    alt="报告预览"
+                    class="w-full h-full object-cover object-top"
+                  />
+                  <div
+                    class="absolute top-3 right-3 bg-white rounded-full p-1 shadow"
+                  >
+                    <span
+                      class="w-6 h-6 flex items-center justify-center text-red-600"
+                    >
+                      <i class="ri-file-warning-line"></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="p-4">
+                  <h4 class="font-medium text-gray-800 mb-1">
+                    新品发布负面舆情分析报告
+                  </h4>
+                  <p class="text-xs text-gray-500 mb-3">
+                    查看时间：2025-04-26 10:15
+                  </p>
+                  <div class="flex justify-between items-center">
+                    <span
+                      class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full"
+                      >已完成</span
+                    >
+                    <div class="flex space-x-1">
+                      <button
+                        class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full !rounded-button whitespace-nowrap"
+                        title="预览"
+                      >
+                        <i class="ri-eye-line"></i>
+                      </button>
+                      <button
+                        class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full !rounded-button whitespace-nowrap"
+                        title="下载"
+                      >
+                        <i class="ri-download-line"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="report-card border border-gray-100 rounded-lg overflow-hidden shadow-sm"
+              >
+                <div class="h-40 bg-gray-100 relative">
+                  <img
+                    src="https://readdy.ai/api/search-image?query=a%20trending%20topics%20report%20with%20fire%20icon%2C%20social%20media%20trends%20visualization%2C%20heat%20map%2C%20viral%20content%20analysis%2C%20professional%20business%20document%20with%20orange%20accents&width=400&height=200&seq=3&orientation=landscape"
+                    alt="报告预览"
+                    class="w-full h-full object-cover object-top"
+                  />
+                  <div
+                    class="absolute top-3 right-3 bg-white rounded-full p-1 shadow"
+                  >
+                    <span
+                      class="w-6 h-6 flex items-center justify-center text-orange-600"
+                    >
+                      <i class="ri-fire-line"></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="p-4">
+                  <h4 class="font-medium text-gray-800 mb-1">
+                    行业热点事件解读报告
+                  </h4>
+                  <p class="text-xs text-gray-500 mb-3">
+                    查看时间：2025-04-25 16:30
+                  </p>
+                  <div class="flex justify-between items-center">
+                    <span
+                      class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full"
+                      >已完成</span
+                    >
+                    <div class="flex space-x-1">
+                      <button
+                        class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full !rounded-button whitespace-nowrap"
+                        title="预览"
+                      >
+                        <i class="ri-eye-line"></i>
+                      </button>
+                      <button
+                        class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full !rounded-button whitespace-nowrap"
+                        title="下载"
+                      >
+                        <i class="ri-download-line"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- 预览报告弹窗 -->
+    <div
+      id="preview-modal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden"
+    >
+      <div class="bg-white rounded-lg w-4/5 h-4/5 flex flex-col">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="font-bold text-gray-800">
+            报告预览：4 月产品舆情月度报告
+          </h3>
+          <button id="close-preview" class="text-gray-500 hover:text-gray-700">
+            <i class="ri-close-line ri-lg"></i>
+          </button>
+        </div>
+        <div class="flex-grow p-6 overflow-auto">
+          <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-8">
+              <h1 class="text-2xl font-bold text-gray-800 mb-2">
+                4 月产品舆情月度报告
+              </h1>
+              <p class="text-gray-600">报告周期：2025-04-01 至 2025-04-30</p>
+              <p class="text-gray-600">生成时间：2025-04-26 14:30</p>
+            </div>
+            <div class="mb-8">
+              <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">
+                摘要
+              </h2>
+              <p class="text-gray-700 mb-4">
+                4 月份产品相关舆情总量为 12,847 条，环比增长
+                12.3%。整体情感倾向以正面为主，占比 52.2%；中性占比
+                29.4%；负面占比
+                18.4%。主要热点话题集中在新产品发布、用户体验反馈及系统性能优化等方面。
+              </p>
+              <div class="grid grid-cols-3 gap-4 mt-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                  <p class="text-sm text-gray-600">舆情总量</p>
+                  <p class="text-2xl font-bold text-gray-800">12,847</p>
+                  <p class="text-green-600 text-sm">
+                    <i class="ri-arrow-up-line ri-sm"></i> 12.3%
+                  </p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                  <p class="text-sm text-gray-600">正面情感</p>
+                  <p class="text-2xl font-bold text-gray-800">52.2%</p>
+                  <p class="text-green-600 text-sm">
+                    <i class="ri-arrow-up-line ri-sm"></i> 3.5%
+                  </p>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg">
+                  <p class="text-sm text-gray-600">负面情感</p>
+                  <p class="text-2xl font-bold text-gray-800">18.4%</p>
+                  <p class="text-red-600 text-sm">
+                    <i class="ri-arrow-up-line ri-sm"></i> 2.1%
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="mb-8">
+              <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">
+                舆情趋势分析
+              </h2>
+              <div id="preview-trend-chart" class="h-[300px] w-full mb-4"></div>
+              <p class="text-gray-700">
+                4 月舆情整体呈上升趋势，其中 4 月 15 日和 4 月 22
+                日出现两个明显的舆情高峰，分别对应新功能发布和系统升级事件。负面情感在
+                4 月 19-21
+                日期间有所增加，主要源于部分用户反馈系统响应速度问题。
+              </p>
+            </div>
+            <div class="mb-8">
+              <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">
+                热点话题分析
+              </h2>
+              <div class="grid grid-cols-2 gap-6">
+                <div id="preview-topic-chart" class="h-[300px]"></div>
+                <div>
+                  <h3 class="font-bold text-gray-800 mb-3">主要热点话题</h3>
+                  <ul class="space-y-3">
+                    <li class="flex items-start">
+                      <div
+                        class="w-6 h-6 flex items-center justify-center bg-blue-100 rounded-full text-primary mt-0.5 mr-2"
+                      >
+                        <i class="ri-checkbox-circle-line"></i>
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-800">新功能体验反馈</p>
+                        <p class="text-sm text-gray-600">
+                          用户对新上线的智能推荐功能普遍给予好评，认为提高了使用效率。
+                        </p>
+                      </div>
+                    </li>
+                    <li class="flex items-start">
+                      <div
+                        class="w-6 h-6 flex items-center justify-center bg-blue-100 rounded-full text-primary mt-0.5 mr-2"
+                      >
+                        <i class="ri-checkbox-circle-line"></i>
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-800">系统性能优化</p>
+                        <p class="text-sm text-gray-600">
+                          系统响应速度问题引发讨论，技术团队已发布优化公告。
+                        </p>
+                      </div>
+                    </li>
+                    <li class="flex items-start">
+                      <div
+                        class="w-6 h-6 flex items-center justify-center bg-blue-100 rounded-full text-primary mt-0.5 mr-2"
+                      >
+                        <i class="ri-checkbox-circle-line"></i>
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-800">用户界面设计</p>
+                        <p class="text-sm text-gray-600">
+                          新版界面设计获得用户好评，简洁直观的操作流程提升了用户体验。
+                        </p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="mb-8">
+              <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">
+                传播渠道分析
+              </h2>
+              <div class="grid grid-cols-2 gap-6">
+                <div id="preview-channel-chart" class="h-[300px]"></div>
+                <div>
+                  <h3 class="font-bold text-gray-800 mb-3">主要传播渠道特点</h3>
+                  <ul class="space-y-3">
+                    <li class="flex items-start">
+                      <div
+                        class="w-6 h-6 flex items-center justify-center bg-blue-100 rounded-full text-primary mt-0.5 mr-2"
+                      >
+                        <i class="ri-weibo-fill"></i>
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-800">微博</p>
+                        <p class="text-sm text-gray-600">
+                          传播速度快，话题热度高，情感波动较大。
+                        </p>
+                      </div>
+                    </li>
+                    <li class="flex items-start">
+                      <div
+                        class="w-6 h-6 flex items-center justify-center bg-blue-100 rounded-full text-primary mt-0.5 mr-2"
+                      >
+                        <i class="ri-zhihu-fill"></i>
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-800">知乎</p>
+                        <p class="text-sm text-gray-600">
+                          专业讨论多，内容深度高，以理性分析为主。
+                        </p>
+                      </div>
+                    </li>
+                    <li class="flex items-start">
+                      <div
+                        class="w-6 h-6 flex items-center justify-center bg-blue-100 rounded-full text-primary mt-0.5 mr-2"
+                      >
+                        <i class="ri-wechat-fill"></i>
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-800">微信</p>
+                        <p class="text-sm text-gray-600">
+                          私密性强，传播范围相对封闭，内容较为全面。
+                        </p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">
+                结论与建议
+              </h2>
+              <div class="space-y-4">
+                <p class="text-gray-700">
+                  1.
+                  整体舆情状况良好，用户对产品新功能反馈积极，应继续保持创新迭代。
+                </p>
+                <p class="text-gray-700">
+                  2.
+                  系统性能问题需要重点关注，建议加快优化进度并及时与用户沟通进展。
+                </p>
+                <p class="text-gray-700">
+                  3. 用户界面设计获得好评，可作为产品设计方向的持续参考。
+                </p>
+                <p class="text-gray-700">
+                  4.
+                  建议加强微博平台的危机监测，及时回应用户关切，避免负面情绪扩散。
+                </p>
+                <p class="text-gray-700">
+                  5. 可考虑在知乎平台开展更多技术交流活动，强化专业形象。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 border-t flex justify-between">
+          <div>
+            <button
+              class="px-4 py-2 border border-gray-200 text-gray-600 rounded-button hover:border-gray-300 mr-2 !rounded-button whitespace-nowrap"
+            >
+              <i class="ri-printer-line mr-1"></i> 打印
+            </button>
+            <button
+              class="px-4 py-2 border border-gray-200 text-gray-600 rounded-button hover:border-gray-300 !rounded-button whitespace-nowrap"
+            >
+              <i class="ri-download-line mr-1"></i> 下载 PDF
+            </button>
+          </div>
+          <button
+            class="px-4 py-2 bg-primary text-white rounded-button hover:bg-primary/90 !rounded-button whitespace-nowrap"
+          >
+            <i class="ri-share-line mr-1"></i> 分享报告
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分享报告弹窗 -->
+    <div
+      id="share-modal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden"
+    >
+      <div class="bg-white rounded-lg w-[480px]">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="font-bold text-gray-800">分享报告</h3>
+          <button id="close-share" class="text-gray-500 hover:text-gray-700">
+            <i class="ri-close-line ri-lg"></i>
+          </button>
+        </div>
+        <div class="p-6">
+          <div class="mb-6">
+            <label class="block text-sm text-gray-600 mb-2">分享链接</label>
+            <div class="flex">
+              <input
+                type="text"
+                value="https://eye.example.com/report/apr2025"
+                class="flex-grow px-3 py-2 border border-gray-200 rounded-l-button text-sm"
+                readonly
+              />
+              <button
+                class="px-4 py-2 bg-primary text-white rounded-r-button hover:bg-primary/90 !rounded-button whitespace-nowrap"
+              >
+                复制
+              </button>
+            </div>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm text-gray-600 mb-2">分享权限</label>
+            <div class="space-y-3">
+              <div class="flex items-center">
+                <input
+                  type="radio"
+                  id="permission-view"
+                  name="permission"
+                  class="custom-radio"
+                  checked
+                />
+                <label for="permission-view" class="ml-2 text-sm text-gray-700"
+                  >仅查看</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="radio"
+                  id="permission-download"
+                  name="permission"
+                  class="custom-radio"
+                />
+                <label
+                  for="permission-download"
+                  class="ml-2 text-sm text-gray-700"
+                  >允许下载</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="radio"
+                  id="permission-edit"
+                  name="permission"
+                  class="custom-radio"
+                />
+                <label for="permission-edit" class="ml-2 text-sm text-gray-700"
+                  >允许编辑</label
+                >
+              </div>
+            </div>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm text-gray-600 mb-2">有效期</label>
+            <div class="relative">
+              <select
+                class="appearance-none px-3 py-2 pr-8 border border-gray-200 rounded-button text-sm w-full"
+              >
+                <option>永久有效</option>
+                <option>7 天</option>
+                <option>30 天</option>
+                <option>90 天</option>
+                <option>自定义</option>
+              </select>
+              <i
+                class="ri-arrow-down-s-line absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+              ></i>
+            </div>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm text-gray-600 mb-2">分享方式</label>
+            <div class="grid grid-cols-4 gap-3">
+              <button
+                class="p-3 border border-gray-200 rounded flex flex-col items-center hover:border-primary hover:text-primary !rounded-button whitespace-nowrap"
+              >
+                <i class="ri-wechat-fill ri-lg mb-1"></i>
+                <span class="text-xs">微信</span>
+              </button>
+              <button
+                class="p-3 border border-gray-200 rounded flex flex-col items-center hover:border-primary hover:text-primary !rounded-button whitespace-nowrap"
+              >
+                <i class="ri-weibo-fill ri-lg mb-1"></i>
+                <span class="text-xs">微博</span>
+              </button>
+              <button
+                class="p-3 border border-gray-200 rounded flex flex-col items-center hover:border-primary hover:text-primary !rounded-button whitespace-nowrap"
+              >
+                <i class="ri-dingding-fill ri-lg mb-1"></i>
+                <span class="text-xs">钉钉</span>
+              </button>
+              <button
+                class="p-3 border border-gray-200 rounded flex flex-col items-center hover:border-primary hover:text-primary !rounded-button whitespace-nowrap"
+              >
+                <i class="ri-mail-fill ri-lg mb-1"></i>
+                <span class="text-xs">邮件</span>
+              </button>
+            </div>
+          </div>
+          <div class="text-center">
+            <button
+              class="px-6 py-2 bg-primary text-white rounded-button hover:bg-primary/90 !rounded-button whitespace-nowrap"
+            >
+              确认分享
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新建报告弹窗 -->
+    <div
+      id="new-report-modal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden"
+    >
+      <div class="bg-white rounded-lg w-[600px]">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="font-bold text-gray-800">新建舆情报告</h3>
+          <button
+            id="close-new-report"
+            class="text-gray-500 hover:text-gray-700"
+          >
+            <i class="ri-close-line ri-lg"></i>
+          </button>
+        </div>
+        <div class="p-6">
+          <div class="mb-6">
+            <label class="block text-sm text-gray-600 mb-2">报告标题</label>
+            <input
+              type="text"
+              placeholder="请输入报告标题"
+              class="px-3 py-2 border border-gray-200 rounded-button text-sm w-full"
+            />
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm text-gray-600 mb-2">报告类型</label>
+            <div class="relative">
+              <select
+                class="appearance-none px-3 py-2 pr-8 border border-gray-200 rounded-button text-sm w-full"
+              >
+                <option>日常监测</option>
+                <option>危机分析</option>
+                <option>热点解读</option>
+                <option>竞品分析</option>
+                <option>自定义报告</option>
+              </select>
+              <i
+                class="ri-arrow-down-s-line absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+              ></i>
+            </div>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm text-gray-600 mb-2">时间范围</label>
+            <div class="flex items-center space-x-2">
+              <input
+                type="date"
+                class="px-3 py-2 border border-gray-200 rounded-button text-sm w-full"
+                value="2025-04-01"
+              />
+              <span class="text-gray-400">至</span>
+              <input
+                type="date"
+                class="px-3 py-2 border border-gray-200 rounded-button text-sm w-full"
+                value="2025-04-26"
+              />
+            </div>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm text-gray-600 mb-2">数据来源</label>
+            <div class="grid grid-cols-3 gap-3">
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="source-weibo"
+                  class="custom-checkbox"
+                  checked
+                />
+                <label for="source-weibo" class="ml-2 text-sm text-gray-700"
+                  >微博</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="source-wechat"
+                  class="custom-checkbox"
+                  checked
+                />
+                <label for="source-wechat" class="ml-2 text-sm text-gray-700"
+                  >微信</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="source-zhihu"
+                  class="custom-checkbox"
+                  checked
+                />
+                <label for="source-zhihu" class="ml-2 text-sm text-gray-700"
+                  >知乎</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="source-douyin"
+                  class="custom-checkbox"
+                  checked
+                />
+                <label for="source-douyin" class="ml-2 text-sm text-gray-700"
+                  >抖音</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="source-news"
+                  class="custom-checkbox"
+                  checked
+                />
+                <label for="source-news" class="ml-2 text-sm text-gray-700"
+                  >新闻媒体</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="source-other"
+                  class="custom-checkbox"
+                />
+                <label for="source-other" class="ml-2 text-sm text-gray-700"
+                  >其他</label
+                >
+              </div>
+            </div>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm text-gray-600 mb-2">关键词</label>
+            <div
+              class="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-button min-h-[80px]"
+            >
+              <div
+                class="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm"
+              >
+                <span>产品名称</span>
+                <button class="ml-1 text-blue-800 hover:text-blue-900">
+                  <i class="ri-close-line"></i>
+                </button>
+              </div>
+              <div
+                class="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm"
+              >
+                <span>公司名称</span>
+                <button class="ml-1 text-blue-800 hover:text-blue-900">
+                  <i class="ri-close-line"></i>
+                </button>
+              </div>
+              <div
+                class="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm"
+              >
+                <span>新功能</span>
+                <button class="ml-1 text-blue-800 hover:text-blue-900">
+                  <i class="ri-close-line"></i>
+                </button>
+              </div>
+              <input
+                type="text"
+                placeholder="添加关键词"
+                class="flex-grow border-none outline-none text-sm px-2 py-1 min-w-[100px]"
+              />
+            </div>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm text-gray-600 mb-2">报告模块</label>
+            <div class="space-y-3">
+              <div
+                class="flex items-center justify-between p-3 border border-gray-200 rounded-button"
+              >
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="module-summary"
+                    class="custom-checkbox"
+                    checked
+                  />
+                  <label for="module-summary" class="ml-2 text-sm text-gray-700"
+                    >舆情概览</label
+                  >
+                </div>
+                <i class="ri-drag-move-line text-gray-400"></i>
+              </div>
+              <div
+                class="flex items-center justify-between p-3 border border-gray-200 rounded-button"
+              >
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="module-trend"
+                    class="custom-checkbox"
+                    checked
+                  />
+                  <label for="module-trend" class="ml-2 text-sm text-gray-700"
+                    >舆情趋势分析</label
+                  >
+                </div>
+                <i class="ri-drag-move-line text-gray-400"></i>
+              </div>
+              <div
+                class="flex items-center justify-between p-3 border border-gray-200 rounded-button"
+              >
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="module-topic"
+                    class="custom-checkbox"
+                    checked
+                  />
+                  <label for="module-topic" class="ml-2 text-sm text-gray-700"
+                    >热点话题分析</label
+                  >
+                </div>
+                <i class="ri-drag-move-line text-gray-400"></i>
+              </div>
+              <div
+                class="flex items-center justify-between p-3 border border-gray-200 rounded-button"
+              >
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="module-channel"
+                    class="custom-checkbox"
+                    checked
+                  />
+                  <label for="module-channel" class="ml-2 text-sm text-gray-700"
+                    >传播渠道分析</label
+                  >
+                </div>
+                <i class="ri-drag-move-line text-gray-400"></i>
+              </div>
+              <div
+                class="flex items-center justify-between p-3 border border-gray-200 rounded-button"
+              >
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="module-sentiment"
+                    class="custom-checkbox"
+                    checked
+                  />
+                  <label
+                    for="module-sentiment"
+                    class="ml-2 text-sm text-gray-700"
+                    >情感分析</label
+                  >
+                </div>
+                <i class="ri-drag-move-line text-gray-400"></i>
+              </div>
+              <div
+                class="flex items-center justify-between p-3 border border-gray-200 rounded-button"
+              >
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="module-conclusion"
+                    class="custom-checkbox"
+                    checked
+                  />
+                  <label
+                    for="module-conclusion"
+                    class="ml-2 text-sm text-gray-700"
+                    >结论与建议</label
+                  >
+                </div>
+                <i class="ri-drag-move-line text-gray-400"></i>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-between">
+            <button
+              class="px-6 py-2 border border-gray-200 text-gray-600 rounded-button hover:border-gray-300 !rounded-button whitespace-nowrap"
+            >
+              保存为草稿
+            </button>
+            <div>
+              <button
+                class="px-6 py-2 border border-gray-200 text-gray-600 rounded-button hover:border-gray-300 mr-2 !rounded-button whitespace-nowrap"
+              >
+                预览
+              </button>
+              <button
+                class="px-6 py-2 bg-primary text-white rounded-button hover:bg-primary/90 !rounded-button whitespace-nowrap"
+              >
+                开始生成
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 全选功能
+        const selectAllCheckbox = document.getElementById("select-all");
+        const checkboxes = document.querySelectorAll("tbody .custom-checkbox");
+
+        if (selectAllCheckbox) {
+          selectAllCheckbox.addEventListener("change", function () {
+            checkboxes.forEach((checkbox) => {
+              checkbox.checked = selectAllCheckbox.checked;
+            });
+          });
+        }
+
+        // 预览报告弹窗
+        const previewButtons = document.querySelectorAll('[title="预览"]');
+        const previewModal = document.getElementById("preview-modal");
+        const closePreview = document.getElementById("close-preview");
+
+        if (previewButtons.length > 0 && previewModal && closePreview) {
+          previewButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+              previewModal.classList.remove("hidden");
+              initPreviewCharts();
+            });
+          });
+
+          closePreview.addEventListener("click", function () {
+            previewModal.classList.add("hidden");
+          });
+        }
+
+        // 分享报告弹窗
+        const shareButtons = document.querySelectorAll('[title="分享"]');
+        const shareModal = document.getElementById("share-modal");
+        const closeShare = document.getElementById("close-share");
+
+        if (shareButtons.length > 0 && shareModal && closeShare) {
+          shareButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+              shareModal.classList.remove("hidden");
+            });
+          });
+
+          closeShare.addEventListener("click", function () {
+            shareModal.classList.add("hidden");
+          });
+        }
+
+        // 新建报告弹窗
+        const newReportButton = document.querySelector("button:has(i.ri-add-line)");
+        const newReportModal = document.getElementById("new-report-modal");
+        const closeNewReport = document.getElementById("close-new-report");
+        if (newReportButton && newReportModal && closeNewReport) {
+          newReportButton.addEventListener("click", function () {
+            newReportModal.classList.remove("hidden");
+          });
+
+          closeNewReport.addEventListener("click", function () {
+            newReportModal.classList.add("hidden");
+          });
+        }
+
+        // 点击弹窗外部关闭弹窗
+        window.addEventListener("click", function (event) {
+          if (event.target === previewModal) {
+            previewModal.classList.add("hidden");
+          }
+          if (event.target === shareModal) {
+            shareModal.classList.add("hidden");
+          }
+          if (event.target === newReportModal) {
+            newReportModal.classList.add("hidden");
+          }
+        });
+
+        // 初始化预览报告中的图表
+        function initPreviewCharts() {
+          // 趋势图
+          if (document.getElementById("preview-trend-chart")) {
+            const trendChart = echarts.init(
+              document.getElementById("preview-trend-chart"),
+            );
+            const trendOption = {
+              animation: false,
+              tooltip: {
+                trigger: "axis",
+                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                borderColor: "#eee",
+                borderWidth: 1,
+                textStyle: {
+                  color: "#1f2937",
+                },
+              },
+              legend: {
+                data: ["总量", "正面", "中性", "负面"],
+                textStyle: {
+                  color: "#1f2937",
+                },
+              },
+              grid: {
+                left: "3%",
+                right: "4%",
+                bottom: "3%",
+                containLabel: true,
+              },
+              xAxis: {
+                type: "category",
+                boundaryGap: false,
+                data: ["4/1", "4/5", "4/10", "4/15", "4/20", "4/25", "4/30"],
+                axisLine: {
+                  lineStyle: {
+                    color: "#ddd",
+                  },
+                },
+                axisLabel: {
+                  color: "#1f2937",
+                },
+              },
+              yAxis: {
+                type: "value",
+                axisLine: {
+                  show: false,
+                },
+                axisLabel: {
+                  color: "#1f2937",
+                },
+                splitLine: {
+                  lineStyle: {
+                    color: "#eee",
+                  },
+                },
+              },
+              series: [
+                {
+                  name: "总量",
+                  type: "line",
+                  symbol: "none",
+                  smooth: true,
+                  lineStyle: {
+                    width: 3,
+                  },
+                  areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                      { offset: 0, color: "rgba(87, 181, 231, 0.2)" },
+                      { offset: 1, color: "rgba(87, 181, 231, 0.02)" },
+                    ]),
+                  },
+                  data: [5200, 6300, 7800, 10500, 9200, 11500, 12847],
+                  color: "rgba(87, 181, 231, 1)",
+                },
+                {
+                  name: "正面",
+                  type: "line",
+                  symbol: "none",
+                  smooth: true,
+                  lineStyle: {
+                    width: 2,
+                  },
+                  data: [2800, 3400, 4100, 5500, 4800, 6000, 6700],
+                  color: "rgba(141, 211, 199, 1)",
+                },
+                {
+                  name: "中性",
+                  type: "line",
+                  symbol: "none",
+                  smooth: true,
+                  lineStyle: {
+                    width: 2,
+                  },
+                  data: [1800, 2100, 2600, 3100, 2900, 3500, 3780],
+                  color: "rgba(251, 191, 114, 1)",
+                },
+                {
+                  name: "负面",
+                  type: "line",
+                  symbol: "none",
+                  smooth: true,
+                  lineStyle: {
+                    width: 2,
+                  },
+                  data: [600, 800, 1100, 1900, 1500, 2000, 2367],
+                  color: "rgba(252, 141, 98, 1)",
+                },
+              ],
+            };
+            trendChart.setOption(trendOption);
+          }
+
+          // 热点话题图
+          if (document.getElementById("preview-topic-chart")) {
+            const topicChart = echarts.init(
+              document.getElementById("preview-topic-chart"),
+            );
+            const topicOption = {
+              animation: false,
+              tooltip: {
+                trigger: "axis",
+                axisPointer: {
+                  type: "shadow",
+                },
+                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                borderColor: "#eee",
+                borderWidth: 1,
+                textStyle: {
+                  color: "#1f2937",
+                },
+              },
+              grid: {
+                left: "3%",
+                right: "4%",
+                bottom: "3%",
+                containLabel: true,
+              },
+              xAxis: {
+                type: "value",
+                axisLine: {
+                  lineStyle: {
+                    color: "#ddd",
+                  },
+                },
+                axisLabel: {
+                  color: "#1f2937",
+                },
+                splitLine: {
+                  lineStyle: {
+                    color: "#eee",
+                  },
+                },
+              },
+              yAxis: {
+                type: "category",
+                data: ["新功能体验", "系统性能", "用户界面", "价格政策", "客户服务"],
+                axisLine: {
+                  lineStyle: {
+                    color: "#ddd",
+                  },
+                },
+                axisLabel: {
+                  color: "#1f2937",
+                },
+              },
+              series: [
+                {
+                  name: "提及量",
+                  type: "bar",
+                  barWidth: "60%",
+                  data: [4200, 3100, 2800, 1900, 1500],
+                  itemStyle: {
+                    color: "rgba(87, 181, 231, 1)",
+                    borderRadius: [0, 4, 4, 0],
+                  },
+                },
+              ],
+            };
+            topicChart.setOption(topicOption);
+          }
+
+          // 传播渠道分析
+          if (document.getElementById("preview-channel-chart")) {
+            const channelChart = echarts.init(
+              document.getElementById("preview-channel-chart"),
+            );
+            const channelOption = {
+              animation: false,
+              tooltip: {
+                trigger: "item",
+                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                borderColor: "#eee",
+                borderWidth: 1,
+                textStyle: {
+                  color: "#1f2937",
+                },
+              },
+              legend: {
+                orient: "horizontal",
+                bottom: 0,
+                textStyle: {
+                  color: "#1f2937",
+                },
+              },
+              series: [
+                {
+                  name: "渠道分布",
+                  type: "pie",
+                  radius: "70%",
+                  center: ["50%", "45%"],
+                  itemStyle: {
+                    borderRadius: 8,
+                  },
+                  data: [
+                    {
+                      value: 5200,
+                      name: "微博",
+                      itemStyle: { color: "rgba(87, 181, 231, 1)" },
+                    },
+                    {
+                      value: 2800,
+                      name: "抖音",
+                      itemStyle: { color: "rgba(141, 211, 199, 1)" },
+                    },
+                    {
+                      value: 1900,
+                      name: "知乎",
+                      itemStyle: { color: "rgba(251, 191, 114, 1)" },
+                    },
+                    {
+                      value: 1600,
+                      name: "微信",
+                      itemStyle: { color: "rgba(252, 141, 98, 1)" },
+                    },
+                    { value: 1347, name: "其他", itemStyle: { color: "#ccc" } },
+                  ],
+                  emphasis: {
+                    itemStyle: {
+                      shadowBlur: 10,
+                      shadowOffsetX: 0,
+                      shadowColor: "rgba(0, 0, 0, 0.5)",
+                    },
+                  },
+                },
+              ],
+            };
+            channelChart.setOption(channelOption);
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

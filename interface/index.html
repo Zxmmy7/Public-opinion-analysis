@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spark SQL 数据分析报告</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.0/dist/echarts.min.js"></script>
+    <style>
+        html, body {
+            width: 100%;
+            min-height: 100%; /* 确保内容撑开页面高度 */
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            width: 90%;
+            max-width: 1400px; /* 最大宽度限制，避免在大屏幕上过宽 */
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            display: grid; /* 使用 CSS Grid 布局 */
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); /* 自动适应列宽，每列最小450px */
+            gap: 20px; /* 网格间距 */
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+        .chart-card {
+            background-color: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            min-height: 350px; /* 确保图表容器有最小高度 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .chart {
+            width: 100%;
+            height: 300px; /* 图表实际渲染区域的高度 */
+        }
+        .error-message {
+            color: #e74c3c;
+            background-color: #ffebee;
+            border: 1px solid #e74c3c;
+            padding: 15px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1em;
+            display: none; /* 默认隐藏 */
+        }
+        .info-card {
+            background-color: #ecf0f1;
+            border-left: 5px solid #3498db;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .info-card p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>蜜雪冰城社交媒体数据分析报告</h1>
+
+    <div id="error-message" class="error-message"></div>
+
+    <div class="container">
+        <div class="chart-card">
+            <h2>整体情感倾向</h2>
+            <div id="sentimentOverallChart" class="chart"></div>
+        </div>
+
+        <div class="chart-card">
+            <h2>每小时发帖量趋势</h2>
+            <div id="postsPerHourChart" class="chart"></div>
+        </div>
+
+        <div class="chart-card">
+            <h2>IP 归属地发帖量分布</h2>
+            <div id="ipLocationCountsChart" class="chart"></div>
+        </div>
+
+        <div class="chart-card">
+            <h2>用户性别比例</h2>
+            <div id="genderRatioChart" class="chart"></div>
+        </div>
+
+        <div class="chart-card">
+            <h2>按 IP 归属地分享总量</h2>
+            <div id="sharesByIpLocationChart" class="chart"></div>
+        </div>
+
+        <div class="chart-card">
+            <h2>热帖情感倾向</h2>
+            <div id="hotPostsSentimentChart" class="chart"></div>
+        </div>
+
+        <div class="chart-card" style="grid-column: span 2;"> <h2>其他关键指标</h2>
+            <div class="info-card">
+                <p><strong>互动量百分位（点赞/评论/分享）：</strong></p>
+                <ul>
+                    <li>点赞: <span id="likesPercentile"></span></li>
+                    <li>评论: <span id="commentsPercentile"></span></li>
+                    <li>分享: <span id="sharesPercentile"></span></li>
+                </ul>
+                <p><strong>点赞数极高的帖子数量:</strong> <span id="highLikesCount"></span></p>
+                <p><strong>平均分享转化率:</strong> <span id="avgShareConversion"></span></p>
+                <p><strong>事件阶段分析 (简化识别):</strong> <span id="eventStages"></span></p>
+                <p><strong>平均每性别发帖量:</strong> <span id="avgPostsPerGender"></span></p>
+            </div>
+            <h2>高转化率内容示例</h2>
+            <div id="highConversionExamples" style="font-size: 0.9em; max-height: 250px; overflow-y: auto;">
+                </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // Flask 应用的 API URL
+        const FLASK_API_URL = 'http://192.168.88.11:5000/get_analysis_data';
+
+        // 获取错误信息显示 DOM 元素
+        const errorMessageDiv = document.getElementById('error-message');
+
+        // 辅助函数：显示错误信息
+        function displayError(message) {
+            errorMessageDiv.textContent = message;
+            errorMessageDiv.style.display = 'block';
+            document.querySelector('.container').style.display = 'none'; // 隐藏图表容器
+        }
+
+        // 数据获取和图表渲染函数
+        fetch(FLASK_API_URL)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP 错误: ${response.status} ${response.statusText}. 可能是Flask应用未运行，或防火墙未开放。`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('成功从 Flask 获取到的数据:', data);
+
+                // --- 1. 整体情感倾向分布（饼图） ---
+                const sentimentOverallChart = echarts.init(document.getElementById('sentimentOverallChart'));
+                const sentimentOverallData = Object.keys(data.sentiment_overall_counts).map(key => ({
+                    name: key === 'positive' ? '积极' : (key === 'neutral' ? '中性' : '消极'),
+                    value: data.sentiment_overall_counts[key]
+                }));
+                sentimentOverallChart.setOption({
+                    tooltip: { trigger: 'item' },
+                    legend: { orient: 'vertical', left: 'left' },
+                    series: [{
+                        name: '情感分布',
+                        type: 'pie',
+                        radius: '50%',
+                        data: sentimentOverallData,
+                        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                    }]
+                });
+
+                // --- 2. 每小时发帖量趋势（折线图） ---
+                const postsPerHourChart = echarts.init(document.getElementById('postsPerHourChart'));
+                postsPerHourChart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    xAxis: {
+                        type: 'category',
+                        data: data.posts_per_hour.x_data.map(h => `${h}点`), // 添加单位
+                        name: '时间'
+                    },
+                    yAxis: { type: 'value', name: '发帖量' },
+                    series: [{
+                        name: data.posts_per_hour.series_name,
+                        type: 'line', // 也可以改为 'bar'
+                        data: data.posts_per_hour.series_data,
+                        smooth: true // 平滑曲线
+                    }]
+                });
+
+                // --- 3. IP 归属地发帖量分布（柱状图 - 取前10个） ---
+                const ipLocationCountsChart = echarts.init(document.getElementById('ipLocationCountsChart'));
+                // 筛选并排序数据，只取前10个
+                const ipDataPairs = data.ip_location_counts.x_data.map((loc, index) => ({
+                    location: loc,
+                    count: data.ip_location_counts.series_data[index]
+                })).sort((a, b) => b.count - a.count).slice(0, 10);
+
+                ipLocationCountsChart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    xAxis: {
+                        type: 'category',
+                        data: ipDataPairs.map(item => item.location),
+                        axisLabel: { rotate: 45, interval: 0 } // 标签旋转并强制显示所有标签
+                    },
+                    yAxis: { type: 'value', name: '发帖量' },
+                    series: [{
+                        name: data.ip_location_counts.series_name,
+                        type: 'bar',
+                        data: ipDataPairs.map(item => item.count)
+                    }]
+                });
+
+                // --- 4. 性别比例（饼图） ---
+                const genderRatioChart = echarts.init(document.getElementById('genderRatioChart'));
+                const genderData = [
+                    { name: '男性', value: data.gender_ratio.m },
+                    { name: '女性', value: data.gender_ratio.f }
+                ];
+                genderRatioChart.setOption({
+                    tooltip: { trigger: 'item' },
+                    legend: { orient: 'vertical', left: 'left' },
+                    series: [{
+                        name: '性别比例',
+                        type: 'pie',
+                        radius: '50%',
+                        data: genderData,
+                        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                    }]
+                });
+
+                // --- 5. 按 IP 归属地分享总量（柱状图 - 取前10个） ---
+                const sharesByIpLocationChart = echarts.init(document.getElementById('sharesByIpLocationChart'));
+                const sharesDataPairs = data.shares_by_ip_location.x_data.map((loc, index) => ({
+                    location: loc,
+                    shares: data.shares_by_ip_location.series_data[index]
+                })).sort((a, b) => b.shares - a.shares).slice(0, 10); // 取前10并排序
+
+                sharesByIpLocationChart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    xAxis: {
+                        type: 'category',
+                        data: sharesDataPairs.map(item => item.location),
+                        axisLabel: { rotate: 45, interval: 0 }
+                    },
+                    yAxis: { type: 'value', name: '分享总量' },
+                    series: [{
+                        name: data.shares_by_ip_location.series_name,
+                        type: 'bar',
+                        data: sharesDataPairs.map(item => item.shares)
+                    }]
+                });
+
+                // --- 6. 热帖情感倾向（饼图） ---
+                const hotPostsSentimentChart = echarts.init(document.getElementById('hotPostsSentimentChart'));
+                const hotPostsSentimentData = Object.keys(data.hot_posts_sentiment_counts).map(key => ({
+                    name: key === 'positive' ? '积极' : (key === 'neutral' ? '中性' : '消极'),
+                    value: data.hot_posts_sentiment_counts[key]
+                }));
+                hotPostsSentimentChart.setOption({
+                    tooltip: { trigger: 'item' },
+                    legend: { orient: 'vertical', left: 'left' },
+                    series: [{
+                        name: '热帖情感',
+                        type: 'pie',
+                        radius: '50%',
+                        data: hotPostsSentimentData,
+                        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                    }]
+                });
+
+
+                // --- 其他关键指标和高转化率内容展示 ---
+                document.getElementById('likesPercentile').textContent = data.interaction_percentiles.likes ? data.interaction_percentiles.likes.toLocaleString() : 'N/A';
+                document.getElementById('commentsPercentile').textContent = data.interaction_percentiles.comments ? data.interaction_percentiles.comments.toLocaleString() : 'N/A';
+                document.getElementById('sharesPercentile').textContent = data.interaction_percentiles.shares ? data.interaction_percentiles.shares.toLocaleString() : 'N/A';
+                document.getElementById('highLikesCount').textContent = data.extremely_high_likes_count !== undefined ? data.extremely_high_likes_count.toLocaleString() : 'N/A';
+                document.getElementById('avgShareConversion').textContent = data.average_share_conversion_rate !== undefined ? (data.average_share_conversion_rate * 100).toFixed(2) + '%' : 'N/A';
+                document.getElementById('eventStages').textContent = data.event_stages.stages_description || 'N/A';
+
+                // 处理 avg_posts_per_gender，它是一个字符串提示
+                document.getElementById('avgPostsPerGender').textContent = data.avg_posts_per_gender || 'N/A';
+
+
+                // 高转化率内容示例
+                const highConversionExamplesDiv = document.getElementById('highConversionExamples');
+                if (Array.isArray(data.high_conversion_content_examples) && data.high_conversion_content_examples.length > 0) {
+                    data.high_conversion_content_examples.forEach(item => {
+                        const p = document.createElement('p');
+                        p.innerHTML = `<strong>内容:</strong> ${item.content || 'N/A'}<br>
+                                       <strong>情感:</strong> ${item.sentiment || 'N/A'}<br>
+                                       <strong>转化率:</strong> ${item.share_conversion_rate !== undefined ? (item.share_conversion_rate * 100).toFixed(2) + '%' : 'N/A'}`;
+                        p.style.marginBottom = '10px';
+                        p.style.paddingBottom = '5px';
+                        p.style.borderBottom = '1px dashed #eee';
+                        highConversionExamplesDiv.appendChild(p);
+                    });
+                } else {
+                    highConversionExamplesDiv.innerHTML = '<p>暂无高转化率内容示例。</p>';
+                }
+
+
+            })
+            .catch(error => {
+                // 错误处理：在控制台打印错误，并在页面上显示错误信息
+                console.error('获取数据或渲染图表时发生错误:', error);
+                displayError(`加载数据失败: ${error.message}。请检查虚拟机IP、端口、Flask应用是否运行，以及HDFS文件是否存在且格式正确。`);
+            });
+    </script>
+</body>
+</html>

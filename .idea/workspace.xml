@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="74ec5bc5-e16e-4afb-8b25-1caa1b540d31" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/git" afterDir="false" />
-    </list>
+    <list default="true" id="74ec5bc5-e16e-4afb-8b25-1caa1b540d31" name="更改" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -41,12 +39,12 @@
     &quot;assignee&quot;: &quot;Zxmmy7&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/Zxmmy7/Public-opinion-analysis.git",
-    "accountId": "0e663264-171e-407d-916b-fa00c2f161a5"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Zxmmy7/Public-opinion-analysis.git&quot;,
+    &quot;accountId&quot;: &quot;0e663264-171e-407d-916b-fa00c2f161a5&quot;
   }
-}]]></component>
+}</component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/.venv/Lib/site-packages/pyspark/errors/exceptions/captured.py" root0="FORCE_HIGHLIGHTING" />
   </component>
@@ -62,43 +60,43 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "Flask 服务器.Flask (interface/flask_api.py).executor": "Run",
-    "JavaScript 调试.index.html.executor": "Run",
-    "JavaScript 调试.inter.html.executor": "Debug",
-    "JavaScript 调试.items.html.executor": "Run",
-    "Python.Analyze_data.executor": "Run",
-    "Python.Data_analysis.executor": "Run",
-    "Python.Data_machinelearning.executor": "Run",
-    "Python.Data_visualization.executor": "Run",
-    "Python.T.executor": "Run",
-    "Python.T2.executor": "Run",
-    "Python.Test.executor": "Run",
-    "Python.csv_analysis (1).executor": "Run",
-    "Python.csv_analysis.executor": "Run",
-    "Python.data_analysis.executor": "Run",
-    "Python.new_test.executor": "Run",
-    "Python.二级评论清洗.executor": "Run",
-    "Python.合并.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.mappings": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.symlinks": "true",
-    "WebServerToolWindowPanel.toolwindow.show.date": "false",
-    "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
-    "WebServerToolWindowPanel.toolwindow.show.size": "false",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "F:/charm",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;Flask 服务器.Flask (interface/flask_api.py).executor&quot;: &quot;Run&quot;,
+    &quot;JavaScript 调试.index.html.executor&quot;: &quot;Run&quot;,
+    &quot;JavaScript 调试.inter.html.executor&quot;: &quot;Debug&quot;,
+    &quot;JavaScript 调试.items.html.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Analyze_data.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Data_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Data_machinelearning.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Data_visualization.executor&quot;: &quot;Run&quot;,
+    &quot;Python.T.executor&quot;: &quot;Run&quot;,
+    &quot;Python.T2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.csv_analysis (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.csv_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.data_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.new_test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.二级评论清洗.executor&quot;: &quot;Run&quot;,
+    &quot;Python.合并.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.mappings&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.symlinks&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.date&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.permissions&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;F:/charm&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="F:\charm\Test_case" />
@@ -327,7 +325,7 @@
       <workItem from="1748426259076" duration="3955000" />
       <workItem from="1748505900403" duration="8661000" />
       <workItem from="1748514905459" duration="1245000" />
-      <workItem from="1748516163060" duration="5552000" />
+      <workItem from="1748516163060" duration="6093000" />
     </task>
     <servers />
   </component>

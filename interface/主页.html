@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>舆情洞察 - 智能舆情分析平台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2A5CAA',
+                        secondary: '#F5F7FA'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+
+        .nav-link {
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #2A5CAA;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-link.active::after {
+            display: none;
+        }
+
+        .tool-card {
+            transition: all 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .chart-card {
+            transition: transform 0.3s ease;
+        }
+
+        .chart-card:hover {
+            transform: scale(1.02);
+        }
+
+        .ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ripple::after {
+            content: "";
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform 0.5s, opacity 1s;
+        }
+
+        .ripple:active::after {
+            transform: scale(0, 0);
+            opacity: 0.3;
+            transition: 0s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .sidebar-animation {
+            animation: slideIn 0.3s forwards;
+        }
+
+        .chart-container {
+            height: 300px;
+            width: 100%;
+        }
+
+        @media (max-width: 992px) {
+            .visual-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .tool-text {
+                display: none;
+            }
+
+            .sidebar {
+                width: 80px;
+            }
+
+            .nav-icon {
+                transform: scale(0.8);
+            }
+        }
+    </style>
+</head>
+<body class="bg-secondary min-h-screen">
+    <!-- 顶部导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 bg-white shadow-md z-50 px-8 py-3 flex items-center justify-between">
+        <!-- 左侧品牌标识 -->
+        <div class="flex items-center">
+            <h1 class="text-primary font-bold text-xl ml-[30px]">舆情洞察</h1>
+        </div>
+
+        <!-- 中部导航按钮 -->
+        <div class="flex space-x-8">
+            <a href="主页.html" class="nav-link active bg-primary text-white px-4 py-2 rounded-button !rounded-button whitespace-nowrap">首页</a>
+            <a href="数据分析.html" class="nav-link text-gray-700 hover:text-primary px-4 py-2 whitespace-nowrap">数据分析</a>
+            <a href="舆情报告.html" class="nav-link text-gray-700 hover:text-primary px-4 py-2 whitespace-nowrap">舆情报告</a>
+        </div>
+
+        <!-- 右侧功能图标 -->
+        <div class="flex items-center space-x-[15px]">
+            <button class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple">
+                <i class="ri-message-2-line ri-lg"></i>
+            </button>
+            <button class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple">
+                <i class="ri-settings-3-line ri-lg"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 主体内容 -->
+    <div class="flex pt-[72px]">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar w-[280px] bg-white p-5 shadow-sm h-[calc(100vh-72px)] overflow-auto">
+            <h2 class="text-gray-800 font-bold mb-4 sidebar-animation">舆情工具</h2>
+
+            <!-- 工具卡片组 -->
+            <div class="space-y-4">
+                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.1s">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-full text-primary">
+                            <i class="ri-alarm-warning-line ri-lg"></i>
+                        </div>
+                        <span class="tool-text ml-3 text-gray-800">监测预警</span>
+                    </div>
+                </div>
+
+                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.2s">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center bg-green-100 rounded-full text-green-600">
+                            <i class="ri-emotion-line ri-lg"></i>
+                        </div>
+                        <span class="tool-text ml-3 text-gray-800">情感分析</span>
+                    </div>
+                </div>
+
+                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.3s">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center bg-orange-100 rounded-full text-orange-600">
+                            <i class="ri-fire-line ri-lg"></i>
+                        </div>
+                        <span class="tool-text ml-3 text-gray-800">热点追踪</span>
+                    </div>
+                </div>
+
+                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.4s">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center bg-purple-100 rounded-full text-purple-600">
+                            <i class="ri-share-forward-line ri-lg"></i>
+                        </div>
+                        <span class="tool-text ml-3 text-gray-800">转发分析</span>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="text-gray-800 font-bold mt-8 mb-4 sidebar-animation">快捷操作</h2>
+
+            <div class="space-y-4">
+                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.5s">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-full text-red-600">
+                            <i class="ri-file-chart-line ri-lg"></i>
+                        </div>
+                        <span class="tool-text ml-3 text-gray-800">生成报告</span>
+                    </div>
+                </div>
+
+                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.6s">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-full text-indigo-600">
+                            <i class="ri-database-2-line ri-lg"></i>
+                        </div>
+                        <span class="tool-text ml-3 text-gray-800">数据导出</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="flex-grow p-6">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">舆情概览</h1>
+                <p class="text-gray-600">2025-04-19 数据更新</p>
+            </div>
+
+            <!-- 数据概览卡片 -->
+            <div class="grid grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-5">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm">今日舆情总量</p>
+                            <h3 class="text-2xl font-bold text-gray-800 mt-1">12,847</h3>
+                            <p class="text-green-500 text-sm mt-1">
+                                <i class="ri-arrow-up-line ri-sm align-middle"></i>
+                                <span>12.3% 较昨日</span>
+                            </p>
+                        </div>
+                        <div class="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-full text-primary">
+                            <i class="ri-bar-chart-line ri-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-5">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm">负面情绪占比</p>
+                            <h3 class="text-2xl font-bold text-gray-800 mt-1">18.5%</h3>
+                            <p class="text-red-500 text-sm mt-1">
+                                <i class="ri-arrow-up-line ri-sm align-middle"></i>
+                                <span>3.2% 较昨日</span>
+                            </p>
+                        </div>
+                        <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-full text-red-600">
+                            <i class="ri-emotion-unhappy-line ri-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-5">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm">热点事件数</p>
+                            <h3 class="text-2xl font-bold text-gray-800 mt-1">7</h3>
+                            <p class="text-gray-500 text-sm mt-1">
+                                <i class="ri-arrow-right-line ri-sm align-middle"></i>
+                                <span>与昨日持平</span>
+                            </p>
+                        </div>
+                        <div class="w-10 h-10 flex items-center justify-center bg-orange-100 rounded-full text-orange-600">
+                            <i class="ri-flashlight-line ri-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-5">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm">预警信息</p>
+                            <h3 class="text-2xl font-bold text-gray-800 mt-1">3</h3>
+                            <p class="text-red-500 text-sm mt-1">
+                                <i class="ri-arrow-up-line ri-sm align-middle"></i>
+                                <span>新增 2 条</span>
+                            </p>
+                        </div>
+                        <div class="w-10 h-10 flex items-center justify-center bg-yellow-100 rounded-full text-yellow-600">
+                            <i class="ri-alert-line ri-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 可视化展示网格 -->
+            <div class="visual-grid grid grid-cols-3 gap-6">
+                <!-- 舆情趋势图 -->
+                <div class="chart-card bg-white rounded-md shadow-sm col-span-2">
+                    <div class="p-4 border-b">
+                        <h3 class="font-bold text-gray-800">舆情趋势分析</h3>
+                    </div>
+                    <div class="p-4">
+                        <div id="trend-chart" class="chart-container"></div>
+                    </div>
+                </div>
+
+                <!-- 情感分布图 -->
+                <div class="chart-card bg-white rounded-md shadow-sm">
+                    <div class="p-4 border-b">
+                        <h3 class="font-bold text-gray-800">情感分布</h3>
+                    </div>
+                    <div class="p-4">
+                        <div id="sentiment-chart" class="chart-container"></div>
+                    </div>
+                </div>
+
+                <!-- 热点话题 -->
+                <div class="chart-card bg-white rounded-md shadow-sm">
+                    <div class="p-4 border-b">
+                        <h3 class="font-bold text-gray-800">热点话题</h3>
+                    </div>
+                    <div class="p-4">
+                        <div id="topic-chart" class="chart-container"></div>
+                    </div>
+                </div>
+
+                <!-- 传播渠道分析 -->
+                <div class="chart-card bg-white rounded-md shadow-sm">
+                    <div class="p-4 border-b">
+                        <h3 class="font-bold text-gray-800">传播渠道分析</h3>
+                    </div>
+                    <div class="p-4">
+                        <div id="channel-chart" class="chart-container"></div>
+                    </div>
+                </div>
+
+                <!-- 地域分布 -->
+                <div class="chart-card bg-white rounded-md shadow-sm">
+                    <div class="p-4 border-b">
+                        <h3 class="font-bold text-gray-800">地域分布</h3>
+                    </div>
+                    <div class="p-4 flex items-center justify-center">
+                        <div class="w-full h-[300px] bg-cover bg-center" style="background-image: url('https://public.readdy.ai/gen_page/map_placeholder_1280x720.png')"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预警信息列表 -->
+            <div class="mt-8 bg-white rounded-md shadow-sm">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800">最新预警信息</h3>
+                    <button class="text-primary hover:underline text-sm flex items-center !rounded-button whitespace-nowrap">
+                        查看全部
+                        <i class="ri-arrow-right-line ri-sm ml-1"></i>
+                    </button>
+                </div>
+                <div class="p-4">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">预警级别</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">事件</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">来源</th>
+                                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="py-3 px-4 text-sm text-gray-700">2025-04-19 10:23</td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">高危</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-700">产品质量投诉集中爆发</td>
+                                    <td class="py-3 px-4 text-sm text-gray-700">人民日报</td>
+                                    <td class="py-3 px-4 text-sm">
+                                        <button class="text-primary hover:underline mr-3 !rounded-button whitespace-nowrap">详情</button>
+                                        <button class="text-gray-500 hover:underline !rounded-button whitespace-nowrap">处理</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-4 text-sm text-gray-700">2025-04-19 09:15</td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">中等</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-700">竞品负面营销活动</td>
+                                    <td class="py-3 px-4 text-sm text-gray-700">央视新闻</td>
+                                    <td class="py-3 px-4 text-sm">
+                                        <button class="text-primary hover:underline mr-3 !rounded-button whitespace-nowrap">详情</button>
+                                        <button class="text-gray-500 hover:underline !rounded-button whitespace-nowrap">处理</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-4 text-sm text-gray-700">2025-04-18 22:47</td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">中等</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-700">用户服务体验投诉</td>
+                                    <td class="py-3 px-4 text-sm text-gray-700">网易新闻</td>
+                                    <td class="py-3 px-4 text-sm">
+                                        <button class="text-primary hover:underline mr-3 !rounded-button whitespace-nowrap">详情</button>
+                                        <button class="text-gray-500 hover:underline !rounded-button whitespace-nowrap">处理</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 舆情趋势图
+            const trendChart = echarts.init(document.getElementById('trend-chart'));
+            const trendOption = {
+                animation: false,
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    borderColor: '#eee',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#1f2937'
+                    }
+                },
+                legend: {
+                    data: ['总量', '正面', '中性', '负面'],
+                    textStyle: {
+                        color: '#1f2937'
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['4/13', '4/14', '4/15', '4/16', '4/17', '4/18', '4/19'],
+                    axisLine: {
+                        lineStyle: {
+                            color: '#ddd'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#1f2937'
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: {
+                        show: false
+                    },
+                    axisLabel: {
+                        color: '#1f2937'
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#eee'
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name: '总量',
+                        type: 'line',
+                        symbol: 'none',
+                        smooth: true,
+                        lineStyle: {
+                            width: 3
+                        },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(87, 181, 231, 0.2)' },
+                                { offset: 1, color: 'rgba(87, 181, 231, 0.02)' }
+                            ])
+                        },
+                        data: [8500, 9200, 10100, 9800, 11200, 11500, 12847],
+                        color: 'rgba(87, 181, 231, 1)'
+                    },
+                    {
+                        name: '正面',
+                        type: 'line',
+                        symbol: 'none',
+                        smooth: true,
+                        lineStyle: {
+                            width: 2
+                        },
+                        data: [4200, 4600, 5300, 4900, 5800, 6000, 6700],
+                        color: 'rgba(141, 211, 199, 1)'
+                    },
+                    {
+                        name: '中性',
+                        type: 'line',
+                        symbol: 'none',
+                        smooth: true,
+                        lineStyle: {
+                            width: 2
+                        },
+                        data: [3400, 3700, 3800, 3900, 4100, 3900, 3780],
+                        color: 'rgba(251, 191, 114, 1)'
+                    },
+                    {
+                        name: '负面',
+                        type: 'line',
+                        symbol: 'none',
+                        smooth: true,
+                        lineStyle: {
+                            width: 2
+                        },
+                        data: [900, 900, 1000, 1000, 1300, 1600, 2367],
+                        color: 'rgba(252, 141, 98, 1)'
+                    }
+                ]
+            };
+            trendChart.setOption(trendOption);
+
+            // 情感分布图
+            const sentimentChart = echarts.init(document.getElementById('sentiment-chart'));
+            const sentimentOption = {
+                animation: false,
+                tooltip: {
+                    trigger: 'item',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    borderColor: '#eee',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#1f2937'
+                    }
+                },
+                legend: {
+                    orient: 'horizontal',
+                    bottom: 0,
+                    textStyle: {
+                        color: '#1f2937'
+                    }
+                },
+                series: [
+                    {
+                        name: '情感分布',
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        avoidLabelOverlap: false,
+                        itemStyle: {
+                            borderRadius: 8
+                        },
+                        label: {
+                            show: false
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: 14,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        labelLine: {
+                            show: false
+                        },
+                        data: [
+                            { value: 6700, name: '正面', itemStyle: { color: 'rgba(141, 211, 199, 1)' } },
+                            { value: 3780, name: '中性', itemStyle: { color: 'rgba(251, 191, 114, 1)' } },
+                            { value: 2367, name: '负面', itemStyle: { color: 'rgba(252, 141, 98, 1)' } }
+                        ]
+                    }
+                ]
+            };
+            sentimentChart.setOption(sentimentOption);
+
+            // 热点话题图
+            const topicChart = echarts.init(document.getElementById('topic-chart'));
+            const topicOption = {
+                animation: false,
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    borderColor: '#eee',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#1f2937'
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    axisLine: {
+                        lineStyle: {
+                            color: '#ddd'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#1f2937'
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#eee'
+                        }
+                    }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: ['产品质量', '服务体验', '价格政策', '竞品对比', '活动营销'],
+                    axisLine: {
+                        lineStyle: {
+                            color: '#ddd'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#1f2937'
+                    }
+                },
+                series: [
+                    {
+                        name: '提及数量',
+                        type: 'bar',
+                        barWidth: '60%',
+                        data: [3800, 2500, 2200, 1900, 1500],
+                        itemStyle: {
+                            color: 'rgba(87, 181, 231, 1)',
+                            borderRadius: [0, 4, 4, 0]
+                        }
+                    }
+                ]
+            };
+            topicChart.setOption(topicOption);
+
+            // 传播渠道分析
+            const channelChart = echarts.init(document.getElementById('channel-chart'));
+            const channelOption = {
+                animation: false,
+                tooltip: {
+                    trigger: 'item',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    borderColor: '#eee',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#1f2937'
+                    }
+                },
+                legend: {
+                    orient: 'horizontal',
+                    bottom: 0,
+                    textStyle: {
+                        color: '#1f2937'
+                    }
+                },
+                series: [
+                    {
+                        name: '渠道分布',
+                        type: 'pie',
+                        radius: '70%',
+                        center: ['50%', '45%'],
+                        itemStyle: {
+                            borderRadius: 8
+                        },
+                        data: [
+                            { value: 5200, name: '微博', itemStyle: { color: 'rgba(87, 181, 231, 1)' } },
+                            { value: 2800, name: '抖音', itemStyle: { color: 'rgba(141, 211, 199, 1)' } },
+                            { value: 1900, name: '知乎', itemStyle: { color: 'rgba(251, 191, 114, 1)' } },
+                            { value: 1600, name: '微信', itemStyle: { color: 'rgba(252, 141, 98, 1)' } },
+                            { value: 1347, name: '其他', itemStyle: { color: '#ccc' } }
+                        ],
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ]
+            };
+            channelChart.setOption(channelOption);
+
+            // 响应式调整
+            window.addEventListener('resize', function() {
+                trendChart.resize();
+                sentimentChart.resize();
+                topicChart.resize();
+                channelChart.resize();
+            });
+        });
+    </script>
+</body>
+</html>
