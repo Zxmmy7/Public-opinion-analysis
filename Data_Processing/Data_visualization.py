@@ -43,7 +43,7 @@ hdfs_input_path = "hdfs://node01:8020/user/spark/processed_data"
 sc = SparkContext.getOrCreate()
 
 # 定义您的HDFS输出目录路径
-output_hdfs_path = "hdfs://node01:8020/user/spark/analysis_results_final.json"
+output_hdfs_path = "hdfs://node01:8020/user/spark/analysis_results_final"
 
 
 def delete_hdfs_path_recursively_if_exists(sc, path_to_delete):
@@ -76,17 +76,12 @@ def delete_hdfs_path_recursively_if_exists(sc, path_to_delete):
             print(f"HDFS路径 {path_to_delete} 不存在，无需删除。")
     except Exception as e:
         print(f"删除HDFS路径 {path_to_delete} 时发生错误: {e}")
-        # 根据需要，您可以选择重新抛出异常或进行其他错误处理
-
 
 
 delete_hdfs_path_recursively_if_exists(sc, output_hdfs_path)
 
 
-
-
-
-
+#程序正式开始
 
 try:
     df = spark.read.parquet(hdfs_input_path)
@@ -613,7 +608,7 @@ results[
 print(results["top_100_opinion_leaders"])
 
 # 最终将所有结果写入HDFS
-output_hdfs_path = "hdfs://node01:8020/user/spark/analysis_results_final.json"
+output_hdfs_path = "hdfs://node01:8020/user/spark/analysis_results_final"
 try:
     json_output_string = json.dumps(results, indent=2, ensure_ascii=False)
 

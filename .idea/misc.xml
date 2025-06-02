@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Black">
+    <option name="sdkName" value="Python 3.10 (charm)" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.9.7 (sftp://node01@192.168.88.11:22/Axiangmu/huanjing/myenv/bin/python3.9) (2)" project-jdk-type="Python SDK" />
+</project>

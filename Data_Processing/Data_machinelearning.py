@@ -1,18 +1,16 @@
+import sys
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import udf, col, size, array_contains, explode, count, when, pandas_udf, lit
-from pyspark.sql.types import ArrayType, StringType, DoubleType, StructType, StructField, LongType
-from pyspark.sql.pandas.functions import PandasUDFType
-from pyspark.ml.feature import Tokenizer, Word2Vec, HashingTF, IDF, StopWordsRemover, VectorAssembler
-from pyspark.ml.classification import LogisticRegression, NaiveBayes, LinearSVC
+from pyspark.sql.functions import col, explode, udf, count, date_format, lit, to_date, monotonically_increasing_id
+from pyspark.sql.types import ArrayType, StringType, DoubleType, IntegerType, StructType, StructField
+from pyspark.ml.feature import HashingTF, IDF, Tokenizer, StopWordsRemover, Word2Vec, CountVectorizer
+from pyspark.ml.classification import NaiveBayes
 from pyspark.ml import Pipeline
-from pyspark.ml.evaluation import MulticlassClassificationEvaluator, BinaryClassificationEvaluator
-from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
-from pyspark.ml.linalg import Vectors, VectorUDT
-import numpy as np
-import pandas as pd
-import jieba # 用于中文分词，需要在集群上安装
-import json # 用于保存评估结果
+from pyspark.ml.evaluation import MulticlassClassificationEvaluator
+from pyspark.ml.clustering import LDA
+import jieba
 import os
+from pyspark.sql.functions import col, to_timestamp, to_date
+from pyspark import SparkContext
 
 # --- 环境变量设置 (保持不变) ---
 os.environ['PYSPARK_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'
@@ -20,282 +18,339 @@ os.environ['PYSPARK_DRIVER_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'
 os.environ['SPARK_HOME'] = '/Axiangmu/software/spark-3.2.0-bin-hadoop3.2-scala2.13'
 os.environ['PYSPARK_SUBMIT_ARGS'] = '--master spark://node01:7077 pyspark-shell'
 
+
+
+# HDFS 相关配置
+HDFS_HOST = "hdfs://node01:8020"  # 例如: "localhost" 或集群namenode IP
+HDFS_PORT = 8020  # HDFS默认端口
+PUBLIC_OPINION_DATA_PATH = "hdfs://node01:8020//user/spark/processed_data/part-00000-e051c3e7-5b1c-42cb-a351-927f90e05afe-c000.snappy.parquet".format(HDFS_HOST, HDFS_PORT)
+SENTIMENT_DICT_PATH = "hdfs://node01:8020/user/spark/weibo_senti_100k.csv".format(HDFS_HOST, HDFS_PORT)  # 假设CSV
+
+# 结果存储路径
+OUTPUT_HDFS_PATH = "hdfs://node01:8020/user/spark/Machine_learning/".format(HDFS_HOST, HDFS_PORT)
+
 # --- 1. 初始化SparkSession (保持不变) ---
-spark = (SparkSession.builder \
-    .appName("SentimentAnalysisWithExternalDictionary") \
-    .master("spark://node01:7077") \
-    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
-    .config("spark.hadoop.fs.defaultFS", "hdfs://node01:8020") \
+spark = (SparkSession.builder
+    .appName("SentimentAnalysisWithExternalDictionary")
+    .master("spark://node01:7077")
+    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    .config("spark.hadoop.fs.defaultFS", "hdfs://node01:8020")
+    .config("spark.driver.memory", "512m")  # Driver内存限制
+    .config("spark.executor.memory", "512m")  # 每个Executor内存
+    .config("spark.executor.cores", "1")  # 每个Executor只使用1核
+    .config("spark.memory.fraction", "0.5")  # 降低JVM堆内存使用比例
+    .config("spark.memory.storageFraction", "0.2")  # 减少缓存内存占比
+    .config("spark.sql.shuffle.partitions", "16")  # 减少shuffle分区数
+    .config("spark.shuffle.spill.numElementsForceSpillThreshold", "1000")  # 更早溢出到磁盘
+    .config("spark.executor.extraJavaOptions","-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35 -XX:ConcGCThreads=1")
+    .config("spark.network.timeout", "800s")
+    .config("spark.executor.heartbeat.interval", "60s")
     .getOrCreate())
+#由于性能问题增加网络超时和心跳间隔，提高稳定性
 
-# --- 2. 加载数据 ---
-
-# 2.1 加载您的主分析数据 (Parquet 格式)
-# 假设您的主分析数据位于 HDFS 的 /user/spark/analysis_results_final.parquet 目录下
-# 并且该目录下可能包含多个 part-xxxx 文件，Spark 可以直接读取目录
-analysis_data_path = "hdfs://node01:8020//user/spark/processed_data/part-00000-b3bdacee-b6aa-4323-91d6-7cd34965602e-c000.snappy.parquet"
-try:
-    # 读取 Parquet 文件，Spark 会自动推断 Schema
-    df_analysis = spark.read.parquet(analysis_data_path)
-    # 确保 '内容' 列存在，如果不存在，需要根据实际数据 Schema 调整
-    if "内容" not in df_analysis.columns:
-        print(f"Warning: '内容' column not found in {analysis_data_path}. Please check your Parquet file schema.")
-        # 这里您可以选择抛出错误，或者尝试使用其他列
-except Exception as e:
-    print(f"Error loading analysis data from {analysis_data_path}: {e}")
-    spark.stop()
-    exit()
-
-# 2.2 加载情感词典 (CSV 格式) (保持不变)
-sentiment_dict_path = "hdfs://node01:8020/user/spark/weibo_senti_100k.csv" # 假设情感词典路径
-df_sentiment_dict = spark.read \
-    .option("header", "true") \
-    .option("inferSchema", "true") \
-    .csv(sentiment_dict_path)
-
-# 确保情感词典的列名与模型期望的匹配，并转换为 DoubleType
-# 情感词典的review列对应主数据的'内容'，label列对应分类模型的'label'
-df_sentiment_dict = df_sentiment_dict.select(
-    col("review").alias("内容"),
-    col("label").cast(DoubleType()) # 确保label是DoubleType
-)
-
-# 2.3 合并数据 (保持不变)
-# 这里假设主分析数据可能没有label列，或者label列需要从情感词典中获取先验知识
-# 如果您的主分析数据本来就带label，可以调整合并策略，例如只用词典增强特征或单独训练
-# 这里我们采用简单合并，将词典数据作为带有明确标签的样本加入
-# 首先，为主分析数据添加一个占位符label列（如果它没有真实标签）
-# 如果df_analysis有真实标签，请根据您的业务逻辑处理合并冲突或优先使用哪一个标签
-if "label" not in df_analysis.columns:
-    df_analysis = df_analysis.withColumn("label", lit(None).cast(DoubleType())) # 暂时为空，稍后可能填充或在训练时跳过无标签数据
-
-# 为了合并，确保两者的列一致 (至少包含 '内容' 和 'label')
-# 如果df_analysis有更多列，这里只选择需要的列进行合并
-df_combined_data = df_analysis.select("内容", "label").unionByName(df_sentiment_dict.select("内容", "label"))
-
-# 过滤掉内容为空的行，以及label为None的行（如果df_analysis中存在无标签数据）
-df_combined_data = df_combined_data.filter(col("内容").isNotNull() & col("label").isNotNull())
+# 配置日志级别
+spark.sparkContext.setLogLevel("WARN")
 
 
-# 2.2 加载情感词典 (CSV 格式)
-sentiment_dict_path = "hdfs://node01:8020/user/spark/weibo_senti_100k.csv" # 假设情感词典路径
-df_sentiment_dict = spark.read \
-    .option("header", "true") \
-    .option("inferSchema", "true") \
-    .csv(sentiment_dict_path)
 
-# 确保情感词典的列名与模型期望的匹配，并转换为 DoubleType
-# 情感词典的review列对应主数据的'内容'，label列对应分类模型的'label'
-df_sentiment_dict = df_sentiment_dict.select(
-    col("review").alias("内容"),
-    col("label").cast(DoubleType()) # 确保label是DoubleType
-)
+sc = SparkContext.getOrCreate()
+delete_path = "hdfs://node01:8020/user/spark/	Machine_learning"
+def delete_hdfs_path_recursively_if_exists(sc, path_to_delete):
+    """
+    检查HDFS路径是否存在，如果存在则递归删除它。
+    这个函数会删除文件或目录及其所有内容。
+    """
+    try:
+        # 通过 SparkContext 直接访问 JVM
+        jvm = sc._jvm
 
-# 2.3 合并数据 (假设情感词典作为额外的训练数据)
-# 这里假设主分析数据可能没有label列，或者label列需要从情感词典中获取先验知识
-# 如果您的主分析数据本来就带label，可以调整合并策略，例如只用词典增强特征或单独训练
-# 这里我们采用简单合并，将词典数据作为带有明确标签的样本加入
-# 首先，为主分析数据添加一个占位符label列（如果它没有真实标签）
-# 如果df_analysis有真实标签，请根据您的业务逻辑处理合并冲突或优先使用哪一个标签
-if "label" not in df_analysis.columns:
-    df_analysis = df_analysis.withColumn("label", lit(None).cast(DoubleType())) # 暂时为空，稍后可能填充或在训练时跳过无标签数据
+        # 获取 Hadoop Configuration
+        # Spark 通常会自动配置好 Hadoop，所以这里创建一个空的 Configuration 即可
+        hadoop_conf = jvm.org.apache.hadoop.conf.Configuration()
 
-# 为了合并，确保两者的列一致 (至少包含 '内容' 和 'label')
-# 如果df_analysis有更多列，这里只选择需要的列进行合并
-df_combined_data = df_analysis.select("内容", "label").unionByName(df_sentiment_dict.select("内容", "label"))
+        # 创建HDFS路径对象
+        hdfs_path_obj = jvm.org.apache.hadoop.fs.Path(path_to_delete)
 
-# 过滤掉内容为空的行，以及label为None的行（如果df_analysis中存在无标签数据）
-df_combined_data = df_combined_data.filter(col("内容").isNotNull() & col("label").isNotNull())
+        # 获取与该路径关联的 FileSystem 实例
+        # 这种方式通常比 FileSystem.get(conf) 更可靠，因为它考虑了路径的 URI
+        fs = hdfs_path_obj.getFileSystem(hadoop_conf)
+
+        # 检查路径是否存在
+        if fs.exists(hdfs_path_obj):
+            print(f"HDFS路径 {path_to_delete} 已存在，正在递归删除...")
+            # 递归删除路径 (True 表示递归删除所有内容)
+            fs.delete(hdfs_path_obj, True)
+            print(f"HDFS路径 {path_to_delete} 删除成功。")
+        else:
+            print(f"HDFS路径 {path_to_delete} 不存在，无需删除。")
+    except Exception as e:
+        print(f"删除HDFS路径 {path_to_delete} 时发生错误: {e}")
 
 
-# --- 3. 增强特征工程 ---
+delete_hdfs_path_recursively_if_exists(sc, delete_path)
 
-# 3.1. 中文分词 UDF (保持不变)
+
+
+print("SparkSession initialized.")
+
+# --- 辅助函数：中文分词 ---
+# 加载停用词（可以从HDFS加载或本地文件）
+STOP_WORDS = ["的", "了", "是", "和", "就", "都", "而", "及", "给", "被", "也", "在", "与", "或", "不", "很", "对"]
+
+
 @udf(ArrayType(StringType()))
-def jieba_tokenize_udf(text):
+def jieba_tokenize(text):
     if text is None:
         return []
-    return list(jieba.cut(text))
-
-# 应用分词到合并后的数据
-df_features = df_combined_data.withColumn("words_jieba", jieba_tokenize_udf(col("内容")))
-
-# 3.2. 移除停用词 (保持不变)
-chinese_stopwords = ["的", "是", "了", "和", "就", "也", "都", "个", "等", "我", "你", "他", "她", "我们"]
-stopwords_remover = StopWordsRemover(inputCol="words_jieba", outputCol="filtered_words", stopWords=chinese_stopwords)
-df_features = stopwords_remover.transform(df_features)
-
-# 3.3. Word2Vec 词嵌入 (保持不变)
-word2Vec = Word2Vec(vectorSize=100, minCount=5, inputCol="filtered_words", outputCol="word_vectors_raw")
-word2Vec_model = word2Vec.fit(df_features) # 注意这里用df_features来fit模型
-df_features = word2Vec_model.transform(df_features)
-
-# 定义UDF来聚合每个文档的词向量（例如求平均）
-@udf(VectorUDT()) # 确保返回类型是 VectorUDT
-def aggregate_word_vectors_udf(list_of_vectors):
-    if not list_of_vectors or all(v is None for v in list_of_vectors):
-        return Vectors.dense([0.0] * 100)
-
-    valid_vectors = []
-    for v in list_of_vectors:
-        if v is not None:
-            # Word2Vec输出的通常是DenseVector，直接用toArray()
-            valid_vectors.append(v.toArray() if hasattr(v, 'toArray') else v)
-
-    if not valid_vectors:
-        return Vectors.dense([0.0] * 100)
-
-    mean_vec = np.mean(valid_vectors, axis=0)
-    return Vectors.dense(mean_vec)
-
-df_features = df_features.withColumn("features", aggregate_word_vectors_udf(col("word_vectors_raw")))
-
-# --- 4. 深度学习情感分类模型（通过Pandas UDF模拟） ---
-# (这部分保持原样，因为它是一个模拟，不会直接用于主要MLlib模型训练)
-INPUT_DIM = 100 # 对应Word2Vec的vectorSize
-schema = StructType([
-    StructField("prediction", DoubleType()),
-    StructField("probability", ArrayType(DoubleType()))
-])
-
-@pandas_udf(schema, PandasUDFType.SCALAR_ITER)
-def predict_sentiment_deep_learning(iterator: pd.Series) -> pd.DataFrame:
-    results = []
-    for pd_series in iterator:
-        input_data = np.array([vec.toArray() for vec in pd_series if vec is not None])
-
-        if input_data.size == 0:
-            predicted_classes = np.zeros(len(pd_series))
-            probabilities_list = [np.zeros(3).tolist()] * len(pd_series) # 假设3个类别
-        else:
-            simulated_predictions = np.random.rand(len(input_data), 3) # 模拟3个类别
-            predicted_classes = np.argmax(simulated_predictions, axis=1)
-            probabilities_list = [arr.tolist() for arr in simulated_predictions]
-
-        results.append(pd.DataFrame({
-            "prediction": predicted_classes.astype(float),
-            "probability": probabilities_list
-        }))
-    return pd.concat(results)
-
-# 如果需要，可以将模拟的深度学习预测应用到 df_features 上
-# df_with_dl_predictions = df_features.withColumn("dl_prediction_result", predict_sentiment_deep_learning(col("features")))
-# df_with_dl_predictions = df_with_dl_predictions.select(
-#     "*",
-#     col("dl_prediction_result.prediction").alias("dl_predicted_label"),
-#     col("dl_prediction_result.probability").alias("dl_probabilities")
-# )
+    words = jieba.cut(text, cut_all=False)
+    return [word for word in words if word.strip() and word.strip() not in STOP_WORDS]
 
 
-# --- 5. PySpark MLlib分类模型训练与评估 ---
+# --- 1. 数据加载与预处理 ---
 
-# 划分训练集和测试集
-# 注意：这里在 df_features 上进行划分，它包含了合并后的数据
-(trainingData, testData) = df_features.randomSplit([0.8, 0.2], seed=42)
+def load_and_preprocess_data():
+    print("Loading public opinion data...")
+    public_opinion_df = spark.read.parquet(PUBLIC_OPINION_DATA_PATH)
+    public_opinion_df = public_opinion_df.withColumnRenamed("内容", "content_text") \
+        .withColumnRenamed("创建日期时间", "created_at")
 
-# 构建分类器实例
-lr = LogisticRegression(featuresCol="features", labelCol="label", maxIter=10)
-nb = NaiveBayes(featuresCol="features", labelCol="label", smoothing=1.0)
-svm = LinearSVC(featuresCol="features", labelCol="label", maxIter=10, rawPredictionCol="rawPredictionSVC") # 为SVC指定不同的rawPredictionCol
+    public_opinion_df = public_opinion_df.withColumn(
+        "created_timestamp",
+        to_timestamp(col("created_at"), "yyyy-MM-dd HH:mm:ssXXX")
+    )
+    public_opinion_df = public_opinion_df.withColumn("created_date", col("created_timestamp").cast("date"))
 
-# 评估器 (多分类)
-evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction", metricName="accuracy")
-binary_evaluator = BinaryClassificationEvaluator(labelCol="label", rawPredictionCol="rawPrediction", metricName="areaUnderROC") # 用于二分类，如果您的label是0,1
+    public_opinion_df = public_opinion_df.withColumn("words", jieba_tokenize(col("content_text")))
 
-print("\n--- Logistic Regression Model ---")
-lr_model = lr.fit(trainingData)
-lr_predictions = lr_model.transform(testData)
-accuracy_lr = evaluator.evaluate(lr_predictions)
-f1_lr = evaluator.evaluate(lr_predictions, {evaluator.metricName: "f1"})
-precision_lr = evaluator.evaluate(lr_predictions, {evaluator.metricName: "weightedPrecision"})
-recall_lr = evaluator.evaluate(lr_predictions, {evaluator.metricName: "weightedRecall"})
-print(f"LR 准确率: {accuracy_lr}")
-print(f"LR F1-Score: {f1_lr}, Weighted Precision: {precision_lr}, Weighted Recall: {recall_lr}")
+    print("Public opinion data schema after tokenization:")
+    public_opinion_df.printSchema()
+    public_opinion_df.show(5)
 
-# 朴素贝叶斯模型 (如果数据是多分类，确保是适合的平滑参数)
-print("\n--- Naive Bayes Model ---")
-nb_model = nb.fit(trainingData)
-nb_predictions = nb_model.transform(testData)
-accuracy_nb = evaluator.evaluate(nb_predictions)
-f1_nb = evaluator.evaluate(nb_predictions, {evaluator.metricName: "f1"})
-print(f"NB 准确率: {accuracy_nb}")
-print(f"NB F1-Score: {f1_nb}")
+    print("Loading sentiment dictionary...")
+    sentiment_dict_df = spark.read.option("header", "true").option("inferSchema", "true").csv(SENTIMENT_DICT_PATH)
+    sentiment_dict_df = sentiment_dict_df.withColumn("words", jieba_tokenize(col("review")))
 
-# 线性SVC模型 (注意：LinearSVC的rawPredictionCol默认与LogisticRegression冲突，已修改)
-print("\n--- Linear SVC Model ---")
-svm_model = svm.fit(trainingData)
-svm_predictions = svm_model.transform(testData)
-accuracy_svm = evaluator.evaluate(svm_predictions)
-f1_svm = evaluator.evaluate(svm_predictions, {evaluator.metricName: "f1"})
-print(f"SVM 准确率: {accuracy_svm}")
-print(f"SVM F1-Score: {f1_svm}")
+    print("Sentiment dictionary schema after tokenization:")
+    sentiment_dict_df.printSchema()
+    sentiment_dict_df.show(5)
+
+    return public_opinion_df, sentiment_dict_df
 
 
-# --- 6. 算法评估与超参数调优 (以Logistic Regression为例) ---
+# --- 2. 情感分类器训练与应用 (朴素贝叶斯) ---
 
-# 构建包含LR的Pipeline
-ml_pipeline = Pipeline(stages=[lr])
+def train_and_apply_sentiment_model(public_opinion_df, sentiment_dict_df):
+    print("Building TF-IDF model...")
+    # TF-IDF 特征提取
+    hashingTF = HashingTF(inputCol="words", outputCol="rawFeatures", numFeatures=2000)
+    idf = IDF(inputCol="rawFeatures", outputCol="features")
 
-# 定义参数网格
-paramGrid = ParamGridBuilder() \
-    .addGrid(lr.regParam, [0.01, 0.1, 0.5]) \
-    .addGrid(lr.elasticNetParam, [0.0, 0.5, 1.0]) \
-    .build()
+    # 训练朴素贝叶斯模型
+    print("Training NaiveBayes model...")
+    nb_classifier = NaiveBayes(labelCol="label", featuresCol="features", modelType="multinomial")
 
-# 创建交叉验证器
-crossval = CrossValidator(estimator=ml_pipeline,
-                          estimatorParamMaps=paramGrid,
-                          evaluator=MulticlassClassificationEvaluator(labelCol="label"),
-                          numFolds=3)
+    # 构建训练管道
+    pipeline = Pipeline(stages=[hashingTF, idf, nb_classifier])
 
-# 运行交叉验证 (在全部有标签的数据上)
-print("\n--- Running Cross Validation for Logistic Regression ---")
-cvModel = crossval.fit(df_features) # 在df_features上进行交叉验证，因为它包含了所有带标签的数据
-best_lr_model = cvModel.bestModel
-print("最佳LR模型参数:")
-# 打印最佳模型中最后一个阶段（LR模型）的参数
-print({param.name: best_lr_model.stages[-1].getOrDefault(param) for param in best_lr_model.stages[-1].params})
+    # 检查sentiment_dict_df是否有足够的数据
+    if sentiment_dict_df.count() == 0:
+        raise ValueError("情感词典数据为空，无法训练分类器。请检查{}文件。")
 
-# 获取最佳模型在测试集上的性能
-best_lr_predictions = best_lr_model.transform(testData)
-accuracy_best_lr = evaluator.evaluate(best_lr_predictions)
-f1_best_lr = evaluator.evaluate(best_lr_predictions, {evaluator.metricName: "f1"})
-precision_best_lr = evaluator.evaluate(best_lr_predictions, {evaluator.metricName: "weightedPrecision"})
-recall_best_lr = evaluator.evaluate(best_lr_predictions, {evaluator.metricName: "weightedRecall"})
-print(f"最佳LR模型在测试集上的准确率: {accuracy_best_lr}")
-print(f"最佳LR模型F1-Score: {f1_best_lr}, Weighted Precision: {precision_best_lr}, Weighted Recall: {recall_best_lr}")
+    # --- 关键修改：首先从整个情感词典中随机抽取 10% 的内容 ---
+    # fraction=0.1 表示大约抽取 10% 的行
+    # withReplacement=False 表示无放回抽样
+    # seed=42 确保可重现性
+    sampled_sentiment_df = sentiment_dict_df.sample(withReplacement=False, fraction=0.02, seed=42)
+    print(f"Sampled 10% of sentiment dictionary data. Sampled size: {sampled_sentiment_df.count()}")
+
+    # --- 接着，在这 10% 的抽样数据中划分训练集和测试集 ---
+    # 假设在这 10% 的数据中，我们按 80/20 比例划分训练集和测试集
+    (trainingData, testData) = sampled_sentiment_df.randomSplit([0.8, 0.2], seed=42)
+
+    print(f"Training data size (from 10% sample): {trainingData.count()}")
+    print(f"Test data size (from 10% sample): {testData.count()}")
+
+    # 训练模型
+    model = pipeline.fit(trainingData)  # 使用 trainingData 来拟合模型
+    print("NaiveBayes model trained.")
+
+    # 应用模型到舆情数据
+    print("Applying sentiment model to public opinion data...")
+    sentiment_predicted_df = model.transform(public_opinion_df)
+
+    sentiment_predicted_df = sentiment_predicted_df.withColumn("predicted_sentiment",
+                                                               col("prediction").cast(IntegerType()))
+
+    print("Sentiment analysis complete. Sample results:")
+    sentiment_predicted_df.select("content_text", "predicted_sentiment").show(5, truncate=False)
+
+    return sentiment_predicted_df, model, testData  # 返回测试集供后续评估使用
 
 
-# --- 7. 结果保存与前端展示数据准备 ---
-evaluation_results = {
-    "LogisticRegression": {
-        "accuracy": accuracy_lr,
-        "f1_score": f1_lr,
-        "precision": precision_lr,
-        "recall": recall_lr
-    },
-    "NaiveBayes": {
-        "accuracy": accuracy_nb,
-        "f1_score": f1_nb
-    },
-    "LinearSVC": {
-        "accuracy": accuracy_svm,
-        "f1_score": f1_svm
-    },
-    "BestLogisticRegression_CV": {
-        "accuracy": accuracy_best_lr,
-        "f1_score": f1_best_lr,
-        "precision": precision_best_lr,
-        "recall": recall_best_lr,
-        "best_params": {param.name: str(best_lr_model.stages[-1].getOrDefault(param)) for param in best_lr_model.stages[-1].params}
+# --- 3. 算法评估 ---
+
+# 评估函数现在直接接收测试集
+def evaluate_sentiment_model(model, testData):
+    print("Evaluating sentiment classification model on test data...")
+
+    # 在测试集上进行预测
+    predictions = model.transform(testData)
+
+    # 评估器
+    evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction", metricName="accuracy")
+    accuracy = evaluator.evaluate(predictions)
+
+    evaluator_precision = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction",
+                                                            metricName="weightedPrecision")
+    precision = evaluator_precision.evaluate(predictions)
+
+    evaluator_recall = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction",
+                                                         metricName="weightedRecall")
+    recall = evaluator_recall.evaluate(predictions)
+
+    evaluator_f1 = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction", metricName="f1")
+    f1_score = evaluator_f1.evaluate(predictions)
+
+    print(f"Model Accuracy (on test data): {accuracy}")
+    print(f"Model Precision (on test data): {precision}")
+    print(f"Model Recall (on test data): {recall}")
+    print(f"Model F1-Score (on test data): {f1_score}")
+
+    evaluation_results = {
+        "model_type": "NaiveBayes Classifier",
+        "evaluation_dataset_size": testData.count(),  # 评估数据集大小是测试集大小
+        "metrics": {
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1_score
+        }
     }
-}
+    return evaluation_results
 
-# 将结果写入本地文件
-output_json_path = "enhanced_sentiment_analysis_results.json"
-with open(output_json_path, "w", encoding="utf-8") as f:
-    json.dump(evaluation_results, f, ensure_ascii=False, indent=4)
-print(f"\n评估结果已保存到 {output_json_path}")
 
-# --- 停止SparkSession (保持不变) ---
-spark.stop()
+# --- 4. 舆情趋势预测 (示例：基于每日情感分布的简单预测) ---
+
+def predict_public_opinion_trend(sentiment_predicted_df):
+    print("Predicting public opinion trend...")
+    # 聚合每日情感数据
+    daily_sentiment_summary = sentiment_predicted_df.groupBy("created_date", "predicted_sentiment") \
+        .agg(count("*").alias("count")) \
+        .orderBy("created_date", "predicted_sentiment")
+
+    # 枢轴操作，将情感转换为列，方便时间序列分析
+    daily_pivot_df = daily_sentiment_summary.groupBy("created_date") \
+        .pivot("predicted_sentiment", [0, 1]) \
+        .sum("count") \
+        .na.fill(0) \
+        .orderBy("created_date") \
+        .cache()
+
+    daily_pivot_df = daily_pivot_df.withColumnRenamed("0", "negative_count") \
+        .withColumnRenamed("1", "positive_count")
+
+    daily_pivot_df.show(5)
+
+    from pyspark.ml.regression import LinearRegression
+    from pyspark.ml.feature import VectorAssembler
+    from pyspark.sql.functions import when
+
+    daily_pivot_df = daily_pivot_df.withColumn("id", monotonically_increasing_id())
+
+    assembler = VectorAssembler(inputCols=["id"], outputCol="features")
+    lr_data = assembler.transform(daily_pivot_df)
+
+    lr_model = LinearRegression(featuresCol="features", labelCol="positive_count", regParam=0.01)  # 添加 regParam
+    lr_model_fit = lr_model.fit(lr_data)
+
+    print("Linear Regression model trained for positive sentiment trend.")
+
+    max_date = daily_pivot_df.selectExpr("max(created_date)").collect()[0][0]
+
+    from datetime import date, timedelta
+    future_dates = []
+    max_id = daily_pivot_df.selectExpr("max(id)").collect()[0][0]
+    for i in range(1, 8):  # 预测未来7天
+        future_dates.append((max_date + timedelta(days=i), float(i + max_id)))
+
+    future_df = spark.createDataFrame(future_dates, ["created_date", "id"])
+    future_df = assembler.transform(future_df)
+
+    future_predictions = lr_model_fit.transform(future_df)
+
+    future_predictions = future_predictions.withColumn(
+        "prediction",
+        when(col("prediction") < 0, 0).otherwise(col("prediction"))
+    )
+
+    print("Future trend predictions (positive sentiment count):")
+    future_predictions.select("created_date", "prediction").show(truncate=False)
+
+    trend_predictions = future_predictions.select(
+        date_format(col("created_date"), "yyyy-MM-dd").alias("date"),
+        col("prediction").alias("predicted_positive_count")
+    ).toJSON().collect()
+
+    return trend_predictions, lr_model_fit
+
+
+# --- 5. 结果汇总与存储 ---
+
+def store_results(sentiment_analysis_df, evaluation_results, trend_predictions, lr_model):
+    print("Storing results to HDFS...")
+    # 1. 舆情内容分析结果 (情感标签、主题等)
+    analysis_content = sentiment_analysis_df.select(
+        col("content_text").alias("content"),
+        col("created_date").alias("date"),
+        col("predicted_sentiment").alias("sentiment_label")
+    )
+    analysis_content.write.mode("overwrite").json(OUTPUT_HDFS_PATH + "public_opinion_analysis_content.json")
+    print("Public opinion analysis content saved.")
+
+    # 2. 算法评估结果
+    eval_schema = StructType([
+        StructField("model_type", StringType(), True),
+        StructField("evaluation_dataset_size", IntegerType(), True),
+        StructField("metrics", StructType([
+            StructField("accuracy", DoubleType(), True),
+            StructField("precision", DoubleType(), True),
+            StructField("recall", DoubleType(), True),
+            StructField("f1_score", DoubleType(), True)
+        ]), True)
+    ])
+    eval_df = spark.createDataFrame([evaluation_results], schema=eval_schema)
+    eval_df.write.mode("overwrite").json(OUTPUT_HDFS_PATH + "algorithm_evaluation_metrics.json")
+    print("Algorithm evaluation metrics saved.")
+
+    # 3. 舆情趋势预测结果 (已是JSON lines格式)
+    trend_rdd = spark.sparkContext.parallelize(trend_predictions)
+    trend_rdd.saveAsTextFile(OUTPUT_HDFS_PATH + "public_opinion_trend_predictions.json")
+    print("Public opinion trend predictions saved.")
+
+
+# --- 主执行流程 ---
+if __name__ == "__main__":
+    try:
+        # 1. 数据加载与预处理
+        public_opinion_df, sentiment_dict_df = load_and_preprocess_data()
+
+        # 2. 情感分类器训练与应用
+        # train_and_apply_sentiment_model 现在会返回测试集
+        sentiment_predicted_df, nb_model, sentiment_test_data = train_and_apply_sentiment_model(public_opinion_df,
+                                                                                                sentiment_dict_df)
+
+        # 3. 算法评估
+        # 评估函数现在使用返回的测试集进行评估
+        evaluation_results = evaluate_sentiment_model(nb_model, sentiment_test_data)
+
+        # 4. 舆情趋势预测
+        trend_predictions, lr_model = predict_public_opinion_trend(sentiment_predicted_df)
+
+        # 5. 结果汇总与存储
+        store_results(sentiment_predicted_df, evaluation_results, trend_predictions, lr_model)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        spark.stop()
+        print("SparkSession stopped.")

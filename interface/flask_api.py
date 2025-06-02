@@ -12,7 +12,8 @@ from flask_cors import CORS
 #       cd /Axiangmu/tongbu          ./start_flask_api.sh
 #即可
 #
-#
+#关闭时     在终端输入ps aux | grep flask
+#           找到对应的进程号，kill  进程号
 #
 app = Flask(__name__)
 CORS(app) # 允许所有来源的跨域请求，方便开发
@@ -25,7 +26,7 @@ CORS(app) # 允许所有来源的跨域请求，方便开发
 
 HDFS_NAMENODE_URL = 'http://192.168.88.11:9870' # 确保这里是NameNode的WebHDFS端口，通常是50070
 HDFS_USER = 'node01' # 根据您保存文件的用户来设置
-HDFS_FILE_PATH = os.getenv('HDFS_FILE_PATH', '/user/spark/analysis_results_final.json/part-00000')
+HDFS_FILE_PATH = os.getenv('HDFS_FILE_PATH', '/user/spark/analysis_results_final/part-00000')
 
 
 
