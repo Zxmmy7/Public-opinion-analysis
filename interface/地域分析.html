@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地域分析 - 舆情洞察</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2A5CAA',
+                        secondary: '#F5F7FA'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 保留大部分原始CSS样式 */
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-link {
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #2A5CAA;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-link.active::after {
+            display: none;
+        }
+
+        .tool-card {
+            transition: all 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .tool-card.active {
+            background-color: #e0f2f7;
+            border-left: 5px solid #2A5CAA;
+        }
+
+        .ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ripple::after {
+            content: "";
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform 0.5s, opacity 1s;
+        }
+
+        .ripple:active::after {
+            transform: scale(0, 0);
+            opacity: 0.3;
+            transition: 0s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .sidebar-animation {
+            animation: slideIn 0.3s forwards;
+        }
+
+        .flex-container {
+            display: flex;
+            padding-top: 72px;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow-y: auto;
+            height: calc(100vh - 72px);
+        }
+
+        .main-content-container {
+            flex-grow: 1;
+            padding: 20px;
+            background-color: #f5f7fa;
+            box-shadow: none;
+            margin: 0;
+            max-width: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            overflow-y: auto;
+            height: calc(100vh - 72px);
+        }
+
+        h1.report-title {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 0px;
+            margin-bottom: 20px;
+            grid-column: 1 / -1;
+        }
+        .chart-card {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .chart {
+            width: 100%;
+            height: 100%;
+            min-height: 250px;
+        }
+        .error-message {
+            color: #e74c3c;
+            background-color: #ffebee;
+            border: 1px solid #e74c3c;
+            padding: 15px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1em;
+            display: none;
+            grid-column: 1 / -1;
+        }
+        .info-card {
+            background-color: #ecf0f1;
+            border-left: 5px solid #3498db;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .info-card p {
+            margin: 5px 0;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 180px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                text-align: center;
+                padding: 10px;
+            }
+            .tool-text {
+                display: none;
+            }
+            .sidebar h2 {
+                display: none;
+            }
+            .sidebar .tool-card .flex {
+                justify-content: center;
+            }
+            .main-content-container {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+            .chart-card {
+                height: 300px;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.0/dist/echarts.min.js"></script>
+</head>
+<body class="bg-secondary min-h-screen">
+    <nav class="fixed top-0 left-0 right-0 bg-white shadow-md z-50 px-8 py-3 flex items-center justify-between">
+        <div class="flex items-center">
+            <h1 class="text-primary font-bold text-xl ml-[30px]">舆情洞察</h1>
+        </div>
+
+        <div class="flex space-x-8">
+            <a href="主页.html" class="nav-link text-gray-700 hover:text-primary px-4 py-2 rounded-button whitespace-nowrap">首页</a>
+            <a href="机器学习及系统性能.html" class="nav-link text-gray-700 hover:text-primary px-4 py-2 whitespace-nowrap">机器学习及系统性能</a>
+            <a href="舆情报告.html" class="nav-link text-gray-700 hover:text-primary px-4 py-2 whitespace-nowrap">舆情报告</a>
+        </div>
+
+        <div class="flex items-center space-x-[15px]">
+            <button class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple">
+                <i class="ri-message-2-line ri-lg"></i>
+            </button>
+            <button class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple">
+                <i class="ri-settings-3-line ri-lg"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="flex-container">
+        <aside class="sidebar">
+            <h2 class="text-gray-800 font-bold mb-4 sidebar-animation">舆情工具</h2>
+
+            <div class="space-y-4">
+                <a href="情感分析.html" class="tool-card bg-white rounded-lg shadow-md p-4 flex items-center cursor-pointer hover:shadow-lg transition duration-300 ease-in-out" style="animation-delay: 0.1s">
+                    <div class="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-full text-blue-600 flex-shrink-0">
+                        <i class="ri-emotion-line ri-lg"></i>
+                    </div>
+                    <span class="tool-text ml-3 text-gray-800 font-medium">情感分析</span>
+                </a>
+
+                <a href="性别分析.html" class="tool-card bg-white rounded-lg shadow-md p-4 flex items-center cursor-pointer hover:shadow-lg transition duration-300 ease-in-out" style="animation-delay: 0.2s">
+                    <div class="w-10 h-10 flex items-center justify-center bg-green-100 rounded-full text-green-600 flex-shrink-0">
+                        <i class="ri-user-line ri-lg"></i>
+                    </div>
+                    <span class="tool-text ml-3 text-gray-800 font-medium">性别分析</span>
+                </a>
+
+                <a href="事件分析.html" class="tool-card bg-white rounded-lg shadow-md p-4 flex items-center cursor-pointer hover:shadow-lg transition duration-300 ease-in-out" style="animation-delay: 0.3s">
+                    <div class="w-10 h-10 flex items-center justify-center bg-orange-100 rounded-full text-orange-600 flex-shrink-0">
+                        <i class="ri-lightbulb-line ri-lg"></i>
+                    </div>
+                    <span class="tool-text ml-3 text-gray-800 font-medium">事件分析</span>
+                </a>
+
+                <a href="地域分析.html" class="tool-card bg-white rounded-lg shadow-md p-4 flex items-center cursor-pointer hover:shadow-lg transition duration-300 ease-in-out active" style="animation-delay: 0.4s">
+                    <div class="w-10 h-10 flex items-center justify-center bg-purple-100 rounded-full text-purple-600 flex-shrink-0">
+                        <i class="ri-map-pin-line ri-lg"></i>
+                    </div>
+                    <span class="tool-text ml-3 text-gray-800 font-medium">地域分析</span>
+                </a>
+            </div>
+
+            <h2 class="text-gray-800 font-bold mt-8 mb-4 sidebar-animation">快捷操作</h2>
+
+            <div class="space-y-4">
+                <a href="#" class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.5s">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-full text-red-600">
+                            <i class="ri-file-chart-line ri-lg"></i>
+                        </div>
+                        <span class="tool-text ml-3 text-gray-800">生成报告</span>
+                    </div>
+                </a>
+
+                <a href="#" class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.6s">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-full text-indigo-600">
+                            <i class="ri-database-2-line ri-lg"></i>
+                        </div>
+                        <span class="tool-text ml-3 text-gray-800">数据导出</span>
+                    </div>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content-container">
+            <h1 class="report-title">蜜雪冰城社交媒体数据 - 地域分析</h1>
+
+            <div id="error-message" class="error-message"></div>
+
+            <div class="chart-card">
+                <h2>IP 归属地发帖量分布</h2>
+                <div id="ipLocationCountsChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <h2>按 IP 归属地分享总量</h2>
+                <div id="sharesByIpLocationChart" class="chart"></div>
+            </div>
+            </main>
+    </div>
+
+    <script type="text/javascript">
+        const FLASK_API_URL = 'http://192.168.88.11:5000/get_analysis_data';
+        const errorMessageDiv = document.getElementById('error-message');
+
+        function displayError(message) {
+            errorMessageDiv.textContent = message;
+            errorMessageDiv.style.display = 'block';
+            document.querySelector('.main-content-container').style.display = 'none';
+        }
+
+        let ipLocationCountsChartInstance;
+        let sharesByIpLocationChartInstance;
+
+        function initRegionCharts(data) {
+            setTimeout(() => {
+                try {
+                    if (ipLocationCountsChartInstance) ipLocationCountsChartInstance.dispose();
+                    if (sharesByIpLocationChartInstance) sharesByIpLocationChartInstance.dispose();
+
+                    ipLocationCountsChartInstance = echarts.init(document.getElementById('ipLocationCountsChart'));
+                    sharesByIpLocationChartInstance = echarts.init(document.getElementById('sharesByIpLocationChart'));
+
+                    // --- IP 归属地发帖量分布（柱状图 - 取前10个） ---
+                    const ipDataPairs = data.ip_location_counts.x_data.map((loc, index) => ({
+                        location: loc,
+                        count: data.ip_location_counts.series_data[index]
+                    })).sort((a, b) => b.count - a.count).slice(0, 10);
+
+                    ipLocationCountsChartInstance.setOption({
+                        tooltip: { trigger: 'axis' },
+                        xAxis: {
+                            type: 'category',
+                            data: ipDataPairs.map(item => item.location),
+                            axisLabel: { rotate: 45, interval: 0 }
+                        },
+                        yAxis: { type: 'value', name: '发帖量' },
+                        series: [{
+                            name: data.ip_location_counts.series_name,
+                            type: 'bar',
+                            data: ipDataPairs.map(item => item.count)
+                        }]
+                    });
+
+                    // --- 按 IP 归属地分享总量（柱状图 - 取前10个） ---
+                    const sharesDataPairs = data.shares_by_ip_location.x_data.map((loc, index) => ({
+                        location: loc,
+                        shares: data.shares_by_ip_location.series_data[index]
+                    })).sort((a, b) => b.shares - a.shares).slice(0, 10); // 取前10并排序
+
+                    sharesByIpLocationChartInstance.setOption({
+                        tooltip: { trigger: 'axis' },
+                        xAxis: {
+                            type: 'category',
+                            data: sharesDataPairs.map(item => item.location),
+                            axisLabel: { rotate: 45, interval: 0 }
+                        },
+                        yAxis: { type: 'value', name: '分享总量' },
+                        series: [{
+                            name: data.shares_by_ip_location.series_name,
+                            type: 'bar',
+                            data: sharesDataPairs.map(item => item.shares)
+                        }]
+                    });
+
+                } catch (e) {
+                    console.error("ECharts 初始化失败:", e);
+                    displayError(`图表初始化失败: ${e.message}。`);
+                }
+            }, 0);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch(FLASK_API_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP 错误: ${response.status} ${response.statusText}. 可能是Flask应用未运行，或防火墙未开放。`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('成功从 Flask 获取到的数据:', data);
+                    initRegionCharts(data);
+                })
+                .catch(error => {
+                    console.error('获取数据时发生错误:', error);
+                    displayError(`加载数据失败: ${error.message}。请检查虚拟机IP、端口、Flask应用是否运行，以及HDFS文件是否存在且格式正确。`);
+                });
+
+            // 导航栏激活状态设置 (针对当前页面)
+            const currentPath = window.location.pathname.split('/').pop();
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active', 'bg-primary', 'text-white', '!rounded-button');
+                    link.classList.remove('text-gray-700', 'hover:text-primary');
+                } else {
+                    link.classList.remove('active', 'bg-primary', 'text-white', '!rounded-button');
+                    link.classList.add('text-gray-700', 'hover:text-primary');
+                }
+            });
+
+            // 侧边栏激活状态设置 (针对当前页面)
+            const sidebarLinks = document.querySelectorAll('.sidebar .tool-card');
+            sidebarLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        });
+
+        window.addEventListener('resize', function() {
+            if (ipLocationCountsChartInstance) ipLocationCountsChartInstance.resize();
+            if (sharesByIpLocationChartInstance) sharesByIpLocationChartInstance.resize();
+        });
+    </script>
+</body>
+</html>

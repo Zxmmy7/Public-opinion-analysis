@@ -5,7 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="74ec5bc5-e16e-4afb-8b25-1caa1b540d31" name="更改" comment="新版">
+      <change afterPath="$PROJECT_DIR$/interface/事件分析.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/interface/地域分析.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/interface/性别分析.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/interface/情感分析.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interface/new.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/new.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interface/主页.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/主页.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,46 +69,46 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "Flask 服务器.Flask (interface/flask_api.py).executor": "Run",
-    "JavaScript 调试.index.html.executor": "Run",
-    "JavaScript 调试.inter.html.executor": "Debug",
-    "JavaScript 调试.items.html.executor": "Run",
-    "Python.Analyze_data.executor": "Run",
-    "Python.Data_analysis.executor": "Run",
-    "Python.Data_machinelearning.executor": "Run",
-    "Python.Data_visualization.executor": "Run",
-    "Python.Date_p.executor": "Run",
-    "Python.T.executor": "Run",
-    "Python.T2.executor": "Run",
-    "Python.Test.executor": "Run",
-    "Python.csv_analysis (1).executor": "Run",
-    "Python.csv_analysis.executor": "Run",
-    "Python.data_analysis.executor": "Run",
-    "Python.flask_api.executor": "Run",
-    "Python.new_test.executor": "Run",
-    "Python.show_data.executor": "Run",
-    "Python.二级评论清洗.executor": "Run",
-    "Python.合并.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.mappings": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.symlinks": "true",
-    "WebServerToolWindowPanel.toolwindow.show.date": "false",
-    "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
-    "WebServerToolWindowPanel.toolwindow.show.size": "false",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "F:/charm",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "vcs.log",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;Flask 服务器.Flask (interface/flask_api.py).executor&quot;: &quot;Run&quot;,
+    &quot;JavaScript 调试.index.html.executor&quot;: &quot;Run&quot;,
+    &quot;JavaScript 调试.inter.html.executor&quot;: &quot;Debug&quot;,
+    &quot;JavaScript 调试.items.html.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Analyze_data.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Data_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Data_machinelearning.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Data_visualization.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Date_p.executor&quot;: &quot;Run&quot;,
+    &quot;Python.T.executor&quot;: &quot;Run&quot;,
+    &quot;Python.T2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.csv_analysis (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.csv_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.data_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.flask_api.executor&quot;: &quot;Run&quot;,
+    &quot;Python.new_test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.show_data.executor&quot;: &quot;Run&quot;,
+    &quot;Python.二级评论清洗.executor&quot;: &quot;Run&quot;,
+    &quot;Python.合并.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.mappings&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.symlinks&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.date&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.permissions&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;F:/charm&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;vcs.log&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="F:\charm\Data_Processing" />
@@ -345,7 +351,7 @@
       <workItem from="1748786293336" duration="1697000" />
       <workItem from="1748847164793" duration="738000" />
       <workItem from="1748850253484" duration="374000" />
-      <workItem from="1748850636866" duration="2246000" />
+      <workItem from="1748850636866" duration="8694000" />
     </task>
     <task id="LOCAL-00001" summary="新版">
       <option name="closed" value="true" />
@@ -355,7 +361,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748850916729</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="新版">
+      <option name="closed" value="true" />
+      <created>1748852949786</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1748852949786</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
