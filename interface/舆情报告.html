@@ -19,6 +19,9 @@
       rel="stylesheet"
     />
     <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+
     <script>
       tailwind.config = {
         theme: {
@@ -137,6 +140,65 @@
           transform: scale(0.8);
         }
       }
+      /* 自定义滚动条样式 */
+      .report-scrollable-content::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .report-scrollable-content::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      .report-scrollable-content::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+      }
+
+      .report-scrollable-content::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+
+      /* 针对 DeepSeek 报告的 Markdown 渲染样式 */
+      .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+          font-weight: 700; /* 加粗标题 */
+          margin-top: 1.5em; /* 增加标题上方间距 */
+          margin-bottom: 0.5em; /* 增加标题下方间距 */
+          color: #2a5caa; /* 使用主色调 */
+      }
+      .prose h1 { font-size: 2.25em; } /* text-4xl */
+      .prose h2 { font-size: 1.875em; } /* text-3xl */
+      .prose h3 { font-size: 1.5em; }  /* text-2xl */
+      .prose p {
+          line-height: 1.7; /* 增加行高 */
+          margin-bottom: 1em;
+      }
+      .prose ul, .prose ol {
+          list-style-position: inside; /* 列表项缩进 */
+          margin-bottom: 1em;
+          padding-left: 1.5em; /* 增加左侧内边距 */
+      }
+      .prose li {
+          margin-bottom: 0.5em;
+      }
+      .prose strong {
+          color: #2a5caa; /* 强调部分使用主色调 */
+      }
+      .prose pre {
+          background-color: #f3f4f6; /* 代码块背景 */
+          padding: 1em;
+          border-radius: 0.5rem;
+          overflow-x: auto; /* 水平滚动 */
+          font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+          font-size: 0.875em; /* 字体小一点 */
+      }
+      .prose code {
+          background-color: #e2e8f0; /* 行内代码背景 */
+          padding: 0.2em 0.4em;
+          border-radius: 0.25rem;
+          font-size: 0.875em;
+      }
+
     </style>
   </head>
   <body class="bg-secondary min-h-screen">
@@ -179,7 +241,87 @@
       </div>
     </nav>
 
-    <div class="flex pt-[72px]">
+    <div class="flex justify-center pt-[72px] px-4 pb-8">
+      <div class="w-full max-w-4xl">
+        <h2 class="text-3xl font-bold text-gray-800 my-8 text-center">AI 舆情分析报告</h2>
+
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8 flex flex-col items-center">
+          <button
+            id="generateReportBtn"
+            class="bg-primary text-white px-8 py-4 rounded-button hover:bg-blue-700 transition duration-300 ripple text-lg font-semibold"
+          >
+            生成 AI 分析报告
+          </button>
+          <div id="loadingIndicator" class="mt-6 text-primary text-lg hidden">
+            <i class="ri-loader-4-line ri-spin mr-2"></i> 正在生成报告，这可能需要几秒钟...
+          </div>
+          <div id="errorDisplay" class="mt-6 text-red-500 text-base hidden"></div>
+        </div>
+
+        <div id="analysisReport" class="bg-white rounded-lg shadow-md p-8 min-h-[500px] overflow-y-auto report-scrollable-content">
+          <h3 class="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3">分析结果：</h3>
+          <div id="reportContent" class="prose max-w-none">
+            <p class="text-gray-500 text-lg">点击“生成 AI 分析报告”按钮以获取最新报告。</p>
+          </div>
+        </div>
       </div>
+    </div>
+
+    <script>
+      // 这里的 IP 地址和端口必须与 start_flask_api.sh 中配置的 FLASK_HOST 和 FLASK_PORT 匹配
+      // 根据您的 start_flask_api.sh，FLASK_HOST="0.0.0.0"，FLASK_PORT=5000
+      // 如果您的前端和后端运行在同一台机器上，并且您通过浏览器访问的是该机器的IP，则可以使用该IP。
+      // 例如，如果您的服务器IP是 192.168.88.11，那么这里就应该写 'http://192.168.88.11:5000'
+      const API_BASE_URL = 'http://192.168.88.11:5000'; // 请将此处的 IP 替换为您的 Flask API 实际监听的 IP 地址
+
+      document.getElementById('generateReportBtn').addEventListener('click', async () => {
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorDisplay = document.getElementById('errorDisplay');
+        const reportContent = document.getElementById('reportContent');
+
+        loadingIndicator.classList.remove('hidden'); // 显示加载指示器
+        errorDisplay.classList.add('hidden'); // 隐藏之前的错误信息
+        reportContent.innerHTML = '<p class="text-gray-500">正在获取报告...</p>'; // 清空并显示加载文本
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/analyze_with_deepseek`, {
+            method: 'POST', // DeepSeek API 路由定义为 POST
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}) // 即使没有数据需要发送，POST 请求也建议有空的 body
+          });
+
+          if (!response.ok) {
+            let errorData;
+            try {
+              errorData = await response.json();
+            } catch (jsonError) {
+              errorData = { message: `服务器返回非 JSON 错误: ${response.status} ${response.statusText}` };
+            }
+            throw new Error(errorData.message || `HTTP 错误！状态码: ${response.status}`);
+          }
+
+          const data = await response.json();
+          if (data.analysis) {
+            // 使用 marked.js 将 Markdown 转换为 HTML
+            const rawHtml = marked.parse(data.analysis);
+            // 使用 DOMPurify 清理 HTML，防止 XSS 攻击
+            const cleanHtml = DOMPurify.sanitize(rawHtml);
+            reportContent.innerHTML = cleanHtml;
+          } else {
+            reportContent.innerHTML = '<p class="text-red-500">AI 分析结果中没有 \'analysis\' 字段。</p>';
+          }
+
+        } catch (error) {
+          console.error('获取 AI 分析数据失败:', error);
+          errorDisplay.classList.remove('hidden');
+          errorDisplay.textContent = `获取 AI 分析数据失败: ${error.message}。请检查 Flask API 服务是否正在运行，以及网络连接是否正常。`;
+          reportContent.innerHTML = '<p class="text-red-500">报告生成失败。</p>';
+        } finally {
+          loadingIndicator.classList.add('hidden'); // 隐藏加载指示器
+        }
+      });
+    </script>
   </body>
 </html>

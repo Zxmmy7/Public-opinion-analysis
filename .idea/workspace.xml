@@ -5,13 +5,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="74ec5bc5-e16e-4afb-8b25-1caa1b540d31" name="更改" comment="新版">
-      <change afterPath="$PROJECT_DIR$/interface/事件分析.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/interface/地域分析.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/interface/性别分析.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/interface/情感分析.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Test_case/MT.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Test_case/weibo_senti_100k.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Visual_data/处理.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/MarsCodeWorkspaceAppSettings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MarsCodeWorkspaceAppSettings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/charm.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/charm.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data_Processing/Data_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data_Processing/Data_analysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data_Processing/Data_machinelearning.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data_Processing/Data_machinelearning.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data_Processing/Data_visualization.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data_Processing/Data_visualization.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Data_Processing/show_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data_Processing/show_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Test_case/Test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Test_case/Test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Test_case/new_test.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Test_case/tt.html" beforeDir="false" afterPath="$PROJECT_DIR$/Test_case/tt.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interface/flask_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/interface/flask_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interface/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/interface/new.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/new.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/interface/主页.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/主页.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interface/事件分析.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/事件分析.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interface/地域分析.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/地域分析.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interface/性别分析.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/性别分析.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interface/情感分析.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/情感分析.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interface/机器学习及系统性能.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/机器学习及系统性能.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interface/舆情报告.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/舆情报告.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,10 +93,13 @@
     &quot;JavaScript 调试.inter.html.executor&quot;: &quot;Debug&quot;,
     &quot;JavaScript 调试.items.html.executor&quot;: &quot;Run&quot;,
     &quot;Python.Analyze_data.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Data_analysis (1).executor&quot;: &quot;Run&quot;,
     &quot;Python.Data_analysis.executor&quot;: &quot;Run&quot;,
     &quot;Python.Data_machinelearning.executor&quot;: &quot;Run&quot;,
     &quot;Python.Data_visualization.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Data_visualization_merged_final.executor&quot;: &quot;Run&quot;,
     &quot;Python.Date_p.executor&quot;: &quot;Run&quot;,
+    &quot;Python.MT.executor&quot;: &quot;Run&quot;,
     &quot;Python.T.executor&quot;: &quot;Run&quot;,
     &quot;Python.T2.executor&quot;: &quot;Run&quot;,
     &quot;Python.Test.executor&quot;: &quot;Run&quot;,
@@ -92,6 +111,7 @@
     &quot;Python.show_data.executor&quot;: &quot;Run&quot;,
     &quot;Python.二级评论清洗.executor&quot;: &quot;Run&quot;,
     &quot;Python.合并.executor&quot;: &quot;Run&quot;,
+    &quot;Python.处理.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowPanel.toolwindow.highlight.mappings&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowPanel.toolwindow.highlight.symlinks&quot;: &quot;true&quot;,
@@ -99,26 +119,29 @@
     &quot;WebServerToolWindowPanel.toolwindow.show.permissions&quot;: &quot;false&quot;,
     &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;F:/charm&quot;,
+    &quot;last_opened_file_path&quot;: &quot;F:/charm/Test_case&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;vcs.log&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="F:\charm\Data_Processing" />
+    <key name="CopyFile.RECENT_KEYS">
       <recent name="F:\charm\Test_case" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="F:\charm\Test_case" />
+      <recent name="F:\charm\Data_Processing" />
       <recent name="F:\charm\Visual_data" />
       <recent name="F:\charm\Visual_picture" />
       <recent name="F:\charm\data_processing" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.Test">
+  <component name="RunManager" selected="Python.Data_machinelearning">
     <configuration name="Data_analysis" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="charm" />
       <option name="ENV_FILES" value="" />
@@ -128,12 +151,12 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Visual_data" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Data_Processing" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="F:\charm\Data_Processing\Data_analysis.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Data_Processing/Data_analysis.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -188,7 +211,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="Test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="MT" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="charm" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -202,7 +225,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Test_case/Test.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Test_case/MT.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -211,7 +234,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="flask_api" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="show_data" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="charm" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -220,35 +243,12 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/interface" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Data_Processing" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/interface/flask_api.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="new_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="charm" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Test_case" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Test_case/new_test.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Data_Processing/show_data.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -259,11 +259,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.Test" />
-        <item itemvalue="Python.flask_api" />
         <item itemvalue="Python.Data_machinelearning" />
-        <item itemvalue="Python.new_test" />
         <item itemvalue="Python.Data_visualization" />
+        <item itemvalue="Python.Data_analysis" />
+        <item itemvalue="Python.show_data" />
+        <item itemvalue="Python.MT" />
       </list>
     </recent_temporary>
   </component>
@@ -351,7 +351,30 @@
       <workItem from="1748786293336" duration="1697000" />
       <workItem from="1748847164793" duration="738000" />
       <workItem from="1748850253484" duration="374000" />
-      <workItem from="1748850636866" duration="8694000" />
+      <workItem from="1748850636866" duration="10841000" />
+      <workItem from="1748863731611" duration="4563000" />
+      <workItem from="1748874208118" duration="1153000" />
+      <workItem from="1748946446605" duration="1714000" />
+      <workItem from="1748968513954" duration="1884000" />
+      <workItem from="1749004925688" duration="431000" />
+      <workItem from="1749017550540" duration="1771000" />
+      <workItem from="1749032623421" duration="517000" />
+      <workItem from="1749044016804" duration="2088000" />
+      <workItem from="1749049788195" duration="314000" />
+      <workItem from="1749050136347" duration="9518000" />
+      <workItem from="1749065221377" duration="652000" />
+      <workItem from="1749089938397" duration="1312000" />
+      <workItem from="1749093971064" duration="2714000" />
+      <workItem from="1749127363538" duration="13328000" />
+      <workItem from="1749143503320" duration="7028000" />
+      <workItem from="1749197140204" duration="16813000" />
+      <workItem from="1749285614305" duration="16873000" />
+      <workItem from="1749311706881" duration="3850000" />
+      <workItem from="1749326654508" duration="294000" />
+      <workItem from="1749329160048" duration="2656000" />
+      <workItem from="1749353804870" duration="5817000" />
+      <workItem from="1749388514929" duration="8432000" />
+      <workItem from="1749432613701" duration="965000" />
     </task>
     <task id="LOCAL-00001" summary="新版">
       <option name="closed" value="true" />
@@ -369,7 +392,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748852949786</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="新版">
+      <option name="closed" value="true" />
+      <created>1748860326993</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1748860326993</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -386,20 +417,22 @@
     <option name="LAST_COMMIT_MESSAGE" value="新版" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/charm$.coverage" NAME="合并 覆盖结果" MODIFIED="1747991562567" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Visual_data" />
-    <SUITE FILE_PATH="coverage/charm$show_data.coverage" NAME="show_data 覆盖结果" MODIFIED="1748524399238" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Data_Processing" />
+    <SUITE FILE_PATH="coverage/charm$.coverage" NAME="处理 覆盖结果" MODIFIED="1749018222154" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Visual_data" />
+    <SUITE FILE_PATH="coverage/charm$MT.coverage" NAME="MT 覆盖结果" MODIFIED="1749288218645" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Test_case" />
+    <SUITE FILE_PATH="coverage/charm$show_data.coverage" NAME="show_data 覆盖结果" MODIFIED="1749331428308" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Data_Processing" />
     <SUITE FILE_PATH="coverage/charm$T.coverage" NAME="T 覆盖结果" MODIFIED="1747982520433" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Test_case" />
     <SUITE FILE_PATH="coverage/charm$Analyze_data.coverage" NAME="Analyze_data 覆盖结果" MODIFIED="1747992047776" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Data_Processing" />
     <SUITE FILE_PATH="coverage/charm$Flask__interface_flask_api_py_.coverage" NAME="Flask (interface/flask_api.py) 覆盖结果" MODIFIED="1748030359567" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
-    <SUITE FILE_PATH="coverage/charm$Data_visualization.coverage" NAME="Data_visualization 覆盖结果" MODIFIED="1748529126491" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Data_Processing" />
-    <SUITE FILE_PATH="coverage/charm$Test.coverage" NAME="Test 覆盖结果" MODIFIED="1748686975001" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Test_case" />
+    <SUITE FILE_PATH="coverage/charm$Test.coverage" NAME="Test 覆盖结果" MODIFIED="1749204437529" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Test_case" />
+    <SUITE FILE_PATH="coverage/charm$Data_visualization.coverage" NAME="Data_visualization 覆盖结果" MODIFIED="1749397903303" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Data_Processing" />
     <SUITE FILE_PATH="coverage/charm$T2.coverage" NAME="T2 覆盖结果" MODIFIED="1744972592826" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Test_case" />
-    <SUITE FILE_PATH="coverage/charm$Data_analysis.coverage" NAME="Data_analysis 覆盖结果" MODIFIED="1748524357366" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Data_Processing" />
-    <SUITE FILE_PATH="coverage/charm$Data_machinelearning.coverage" NAME="Data_machinelearning 覆盖结果" MODIFIED="1748621561452" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Data_Processing" />
+    <SUITE FILE_PATH="coverage/charm$Data_analysis.coverage" NAME="Data_analysis 覆盖结果" MODIFIED="1749397768374" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Data_Processing" />
     <SUITE FILE_PATH="coverage/charm$flask_api.coverage" NAME="flask_api 覆盖结果" MODIFIED="1748680126873" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/interface" />
-    <SUITE FILE_PATH="coverage/charm$new_test.coverage" NAME="new_test 覆盖结果" MODIFIED="1748619846971" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Test_case" />
+    <SUITE FILE_PATH="coverage/charm$Data_machinelearning.coverage" NAME="Data_machinelearning 覆盖结果" MODIFIED="1749398197941" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Data_Processing" />
+    <SUITE FILE_PATH="coverage/charm$new_test.coverage" NAME="new_test 覆盖结果" MODIFIED="1749141894023" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Test_case" />
     <SUITE FILE_PATH="coverage/charm$csv_analysis.coverage" NAME="csv_analysis 覆盖结果" MODIFIED="1747989791088" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/charm$csv_analysis__1_.coverage" NAME="csv_analysis (1) 覆盖结果" MODIFIED="1747990451852" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Visual_data" />
     <SUITE FILE_PATH="coverage/charm$Date_p.coverage" NAME="Date_p 覆盖结果" MODIFIED="1748528685346" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Visual_data" />
+    <SUITE FILE_PATH="coverage/charm$Data_analysis__1_.coverage" NAME="Data_analysis (1) 覆盖结果" MODIFIED="1749017628540" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Data_Processing" />
   </component>
 </project>

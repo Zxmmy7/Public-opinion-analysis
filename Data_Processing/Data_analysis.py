@@ -2,37 +2,36 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, lit
 import os
 
-
+#步骤一
 
 # 使用spark前先将一级评论和二级评论上传至hdfs中
 #
 # 指令：
 #
 # # 上传一级评论数据
-# hdfs dfs -put /Axiangmu/tongbu/Visual_data/蜜雪冰城数据一级评论.csv /user/spark/new_data/蜜雪冰城数据一级评论.csv
+# hdfs dfs -put /Axiangmu/tongbu/Visual_data/小米一级评论.csv /user/spark/new_data/小米一级评论.csv
 #
 # # 上传二级评论数据
-# hdfs dfs -put /Axiangmu/tongbu/Visual_data/蜜雪冰城二级评论.csv /user/spark/new_data/蜜雪冰城二级评论.csv
+# hdfs dfs -put /Axiangmu/tongbu/Visual_data/小米二级评论.csv /user/spark/new_data/小米二级评论.csv
 #
 # # 验证文件是否成功上传
 # hdfs dfs -ls /user/spark/new_data/
 
 
 
-# (你现有的 PYSPARK_PYTHON 和 PYSPARK_DRIVER_PYTHON 设置不变)
+# ( PYSPARK_PYTHON 和 PYSPARK_DRIVER_PYTHON 设置不变)
 os.environ['PYSPARK_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'
 os.environ['PYSPARK_DRIVER_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'
-# 核心步骤：设置 SPARK_HOME 指向你虚拟机上 Spark 3.2.0 (scala2.13) 的安装路径
 os.environ['SPARK_HOME'] = '/Axiangmu/software/spark-3.2.0-bin-hadoop3.2-scala2.13'
 os.environ['PYSPARK_SUBMIT_ARGS'] = '--master spark://node01:7077 pyspark-shell'
 
 
 # --- 配置部分 ---
-# HDFS 输入路径 - 确保这里指向你上传的 HDFS 路径
+# HDFS 输入路径 - 这里也需要更改CSV文件的名称
 # HDFS 的端口通常是 8020
 hdfs_input_base_path = "hdfs://node01:8020/user/spark/new_data"
-input_csv_level1_hdfs = f"{hdfs_input_base_path}/蜜雪冰城数据一级评论.csv"
-input_csv_level2_hdfs = f"{hdfs_input_base_path}/蜜雪冰城二级评论.csv"
+input_csv_level1_hdfs = f"{hdfs_input_base_path}/小米一级评论.csv"
+input_csv_level2_hdfs = f"{hdfs_input_base_path}/小米二级评论.csv"
 
 # 原始列名和翻译后的列名映射
 column_translation_map = {
@@ -46,9 +45,7 @@ column_translation_map = {
 }
 
 # 处理后的数据在HDFS上的保存基础路径
-# 你可以根据需要修改这个基础路径
-hdfs_output_base_path = "hdfs://node01:8020/user/spark/processed_data"
-
+hdfs_output_base_path = "hdfs://node01:8020/user/spark/Aprocessed_data"
 output_format = "parquet"  # 推荐使用 parquet 格式，高效且支持列式存储
 
 

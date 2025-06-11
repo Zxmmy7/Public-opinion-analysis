@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 
 # --- 配置部分 ---
 # 处理后的数据在HDFS上的路径
-hdfs_processed_data_path = "hdfs://node01:8020/user/spark/processed_data"
+hdfs_processed_data_path = "hdfs://node01:8020/user/spark/Aprocessed_data"
 # --- 配置部分结束 ---
 
 def analyze_processed_data(input_path):

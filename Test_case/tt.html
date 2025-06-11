@@ -3,56 +3,891 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蜜雪冰城评论数据可视化</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="js/echarts.min.js"></script> </head>
-<body>
-    <h1>蜜雪冰城评论数据多维度分析</h1>
+    <title>舆情洞察 - 智能舆情分析平台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2A5CAA',
+                        secondary: '#F5F7FA'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
 
-    <div class="chart-container">
-        <h2>每日评论量</h2>
-        <div id="timeChart" style="width: 100%; height: 400px;"></div>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            margin: 0; /* 确保body没有默认外边距 */
+            padding: 0; /* 确保body没有默认内边距 */
+        }
+
+        .nav-link {
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #2A5CAA; /* 已修正 */
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-link.active::after {
+            display: none;
+        }
+
+        .tool-card {
+            transition: all 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ripple::after {
+            content: "";
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform 0.5s, opacity 1s;
+        }
+
+        .ripple:active::after {
+            transform: scale(0, 0);
+            opacity: 0.3;
+            transition: 0s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .sidebar-animation {
+            animation: slideIn 0.3s forwards;
+        }
+
+        /* 针对侧边栏和主内容区域的调整 */
+        .flex-container {
+            display: flex;
+            padding-top: 72px; /* 导航栏高度 */
+            height: 100vh; /* 确保占据整个视口高度 */
+            overflow: hidden; /* 防止内部滚动条影响外部布局 */
+        }
+
+        .sidebar {
+            width: 200px; /* 调整侧边栏宽度为200px */
+            flex-shrink: 0; /* 防止侧边栏被压缩 */
+            background-color: #ffffff;
+            padding: 20px; /* 调整内边距，使其更美观 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 轻微阴影 */
+            overflow-y: auto; /* 允许侧边栏内容滚动 */
+            height: calc(100vh - 72px); /* 占据剩余高度 */
+        }
+
+        .main-content-container {
+            flex-grow: 1; /* 让主内容区占据剩余空间 */
+            padding: 20px;
+            background-color: #f5f7fa; /* 与主页背景色保持一致 */
+            box-shadow: none; /* 移除容器阴影，让卡片自己带阴影 */
+            margin: 0; /* 移除外边距 */
+            max-width: none; /* 移除最大宽度限制，让其自适应 */
+            display: grid; /* 使用 CSS Grid 布局 */
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); /* 自动适应列宽，每列最小450px */
+            gap: 20px; /* 网格间距 */
+            overflow-y: auto; /* 允许内容滚动 */
+            height: calc(100vh - 72px); /* 占据剩余高度 */
+        }
+
+        h1.report-title { /* 为报告标题添加特定类名，避免与主页H1冲突 */
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 0px; /* 调整标题上边距 */
+            margin-bottom: 20px;
+            grid-column: 1 / -1; /* 让标题占据所有列 */
+        }
+        .chart-card {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            height: 400px; /* 显式设置一个固定高度 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .chart {
+            width: 100%;
+            height: 100%; /* 让图表占据父容器（chart-card）的全部高度 */
+            min-height: 250px; /* 确保即使在小屏幕下也有最小高度 */
+        }
+        .error-message {
+            color: #e74c3c;
+            background-color: #ffebee;
+            border: 1px solid #e74c3c;
+            padding: 15px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1em;
+            display: none; /* 默认隐藏 */
+            grid-column: 1 / -1; /* 错误消息占据所有列 */
+        }
+        .info-card {
+            background-color: #ecf0f1;
+            border-left: 5px solid #3498db;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .info-card p {
+            margin: 5px 0;
+        }
+
+        .info-overlay {
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            line-height: 1.5;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            width: 48%;
+            margin-bottom: 8px;
+        }
+
+        .examples-container {
+            background-color: #ffffff;
+            border: 1px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .example-card {
+            background-color: #f9fafb;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+
+        /* 响应式调整 */
+        @media (max-width: 1024px) { /* 调整断点，例如在较小尺寸的桌面或平板上 */
+            .sidebar {
+                width: 180px; /* 在平板尺寸下进一步缩小侧边栏宽度 */
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px; /* 更窄的宽度，只显示图标 */
+                text-align: center;
+                padding: 10px; /* 调整小屏幕下的内边距 */
+            }
+            .tool-text {
+                display: none; /* 在小屏幕下隐藏文字 */
+            }
+            .sidebar h2 {
+                display: none; /* 在小屏幕下隐藏标题 */
+            }
+            .sidebar .tool-card .flex {
+                justify-content: center; /* 图标居中 */
+            }
+            .main-content-container {
+                grid-template-columns: 1fr; /* 在小屏幕下改为单列布局 */
+                padding: 10px; /* 调整小屏幕下的内边距 */
+            }
+            .chart-card {
+                height: 300px; /* 小屏幕下可以适当减小图表卡片高度 */
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.0/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
+    </head>
+<body class="bg-secondary min-h-screen">
+    <nav class="fixed top-0 left-0 right-0 bg-white shadow-md z-50 px-8 py-3 flex items-center justify-between">
+        <div class="flex items-center">
+            <h1 class="text-primary font-bold text-xl ml-[30px]">舆情洞察</h1>
+        </div>
+
+        <div class="flex space-x-8">
+            <a href="主页.html" class="nav-link active bg-primary text-white px-4 py-2 rounded-button !rounded-button whitespace-nowrap">首页</a>
+            <a href="机器学习及系统性能.html" class="nav-link text-gray-700 hover:text-primary px-4 py-2 whitespace-nowrap">机器学习及系统性能</a>
+            <a href="舆情报告.html" class="nav-link text-gray-700 hover:text-primary px-4 py-2 whitespace-nowrap">舆情报告</a>
+        </div>
+
+        <div class="flex items-center space-x-[15px]">
+            <button class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple">
+                <i class="ri-message-2-line ri-lg"></i>
+            </button>
+            <button class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple">
+                <i class="ri-settings-3-line ri-lg"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="flex-container">
+        <aside class="sidebar">
+            <h2 class="text-gray-800 font-bold mb-4 sidebar-animation">舆情工具</h2>
+
+            <div class="space-y-4">
+                <a href="情感分析.html" class="tool-card bg-white rounded-lg shadow-md p-4 flex items-center cursor-pointer hover:shadow-lg transition duration-300 ease-in-out" style="animation-delay: 0.1s">
+                    <div class="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-full text-blue-600 flex-shrink-0">
+                        <i class="ri-emotion-line ri-lg"></i>
+                    </div>
+                    <span class="tool-text ml-3 text-gray-800 font-medium">情感分析</span>
+                </a>
+
+                <a href="性别分析.html" class="tool-card bg-white rounded-lg shadow-md p-4 flex items-center cursor-pointer hover:shadow-lg transition duration-300 ease-in-out" style="animation-delay: 0.2s">
+                    <div class="w-10 h-10 flex items-center justify-center bg-green-100 rounded-full text-green-600 flex-shrink-0">
+                        <i class="ri-user-line ri-lg"></i>
+                    </div>
+                    <span class="tool-text ml-3 text-gray-800 font-medium">性别分析</span>
+                </a>
+
+                <a href="事件分析.html" class="tool-card bg-white rounded-lg shadow-md p-4 flex items-center cursor-pointer hover:shadow-lg transition duration-300 ease-in-out" style="animation-delay: 0.3s">
+                    <div class="w-10 h-10 flex items-center justify-center bg-orange-100 rounded-full text-orange-600 flex-shrink-0">
+                        <i class="ri-lightbulb-line ri-lg"></i>
+                    </div>
+                    <span class="tool-text ml-3 text-gray-800 font-medium">事件分析</span>
+                </a>
+
+                <a href="地域分析.html" class="tool-card bg-white rounded-lg shadow-md p-4 flex items-center cursor-pointer hover:shadow-lg transition duration-300 ease-in-out" style="animation-delay: 0.4s">
+                    <div class="w-10 h-10 flex items-center justify-center bg-purple-100 rounded-full text-purple-600 flex-shrink-0">
+                        <i class="ri-map-pin-line ri-lg"></i>
+                    </div>
+                    <span class="tool-text ml-3 text-gray-800 font-medium">地域分析</span>
+                </a>
+            </div>
+
+            <h2 class="text-gray-800 font-bold mt-8 mb-4 sidebar-animation">快捷操作</h2>
+
+            <div class="space-y-4">
+                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.5s">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-full text-red-600">
+                            <i class="ri-file-chart-line ri-lg"></i>
+                        </div>
+                        <span class="tool-text ml-3 text-gray-800">生成报告</span>
+                    </div>
+                </div>
+
+                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.6s">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-full text-indigo-600">
+                            <i class="ri-database-2-line ri-lg"></i>
+                        </div>
+                        <span class="tool-text ml-3 text-gray-800">数据导出</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content-container">
+            <h1 class="report-title">蜜雪冰城社交媒体数据分析报告</h1>
+
+            <div id="error-message" class="error-message"></div>
+
+            <div class="chart-card">
+                <h2>整体情感倾向</h2>
+                <div id="sentimentOverallChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <h2>每小时发帖量趋势</h2>
+                <div id="postsPerHourChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <h2>IP 归属地发帖量分布</h2>
+                <div id="ipLocationCountsChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <h2>用户性别比例</h2>
+                <div id="genderRatioChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <h2>男性情感倾向</h2>
+                <div id="maleSentimentChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <h2>女性情感倾向</h2>
+                <div id="femaleSentimentChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <h2>按 IP 归属地分享总量</h2>
+                <div id="sharesByIpLocationChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <h2>热帖情感倾向</h2>
+                <div id="hotPostsSentimentChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <h2>高频词词云图</h2>
+                <div id="wordCloudChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card" style="grid-column: span 2;">
+                <h2>中国地域发帖热度图</h2>
+                <div id="chinaMapChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card" style="grid-column: span 2; height: 600px;">
+                <h2>其他关键指标</h2>
+                <div id="otherMetricsChart" class="chart" style="height: 50%;"></div>
+
+                <div class="info-overlay">
+                    <div class="info-item">
+                        <p><strong>点赞数极高的帖子数量:</strong> <span id="highLikesCount">—</span></p>
+                    </div>
+                    <div class="info-item">
+                        <p><strong>平均分享转化率:</strong> <span id="avgShareConversion">—</span></p>
+                    </div>
+                    <div class="info-item">
+                        <p><strong>事件阶段分析:</strong> <span id="eventStages">—</span></p>
+                    </div>
+                    <div class="info-item">
+                        <p><strong>高转化率示例总数:</strong> <span id="exampleCount">—</span></p>
+                    </div>
+                </div>
+
+                <h2 class="mt-4">高转化率内容示例</h2>
+                <div id="highConversionExamples" class="examples-container">
+                    </div>
+            </div>
+        </main>
     </div>
 
-    <div class="chart-container">
-        <h2>总体情感分布</h2>
-        <div id="sentimentOverallChart" style="width: 100%; height: 400px;"></div>
-    </div>
+    <script type="text/javascript">
+        // Flask 应用的 API URL
+        const FLASK_API_URL = 'http://192.168.88.11:5000/get_analysis_data';
 
-    <div class="chart-container">
-        <h2>舆情地域分布</h2>
-        <div id="locationChart" style="width: 100%; height: 400px;"></div>
-    </div>
+        // 获取错误信息显示 DOM 元素
+        const errorMessageDiv = document.getElementById('error-message');
 
-    <div class="chart-container">
-        <h2>不同时间段的情感分析</h2>
-        <div id="sentimentByTimeChart" style="width: 100%; height: 400px;"></div>
-    </div>
+        // 辅助函数：显示错误信息
+        function displayError(message) {
+            errorMessageDiv.textContent = message;
+            errorMessageDiv.style.display = 'block';
+            document.querySelector('.main-content-container').style.display = 'none'; // 隐藏图表容器
+        }
 
-    <div class="chart-container">
-        <h2>地域情感差异</h2>
-        <div id="regionalSentimentChart" style="width: 100%; height: 400px;"></div>
-    </div>
+        let sentimentOverallChart;
+        let postsPerHourChart;
+        let ipLocationCountsChart;
+        let genderRatioChart;
+        let maleSentimentChart; // 新增
+        let femaleSentimentChart; // 新增
+        let sharesByIpLocationChart;
+        let hotPostsSentimentChart;
+        let wordCloudChart;
+        let chinaMapChart;
+        let otherMetricsChartInstance; // 新增
 
-    <div class="chart-container">
-        <h2>话题情感倾向</h2>
-        <div id="topicSentimentChart" style="width: 100%; height: 400px;"></div>
-    </div>
+        // 定义一个异步函数来加载地图数据并初始化地图图表
+        async function loadAndRegisterChinaMap() {
+            try {
+                // *** 核心改动：修改为本地china.json文件的相对路径 ***
+                const response = await fetch('./echarts-4.2.1-rc1-map/json/china.json');
+                if (!response.ok) {
+                    throw new Error(`Failed to load china.json from local: ${response.status} ${response.statusText}. 请检查文件路径是否正确。`);
+                }
+                const chinaJson = await response.json();
 
-    <div class="chart-container">
-        <h2>情感演变趋势</h2>
-        <div id="sentimentTrendChart" style="width: 100%; height: 400px;"></div>
-    </div>
+                // 注册地图到 ECharts
+                echarts.registerMap('china', chinaJson);
+                console.log('ECharts 中国地图已成功注册！');
 
-    <div class="chart-container">
-        <h2>词云分析</h2>
-        <div id="wordCloudChart" style="width: 100%; height: 400px;"></div>
-    </div>
+                // 现在可以安全地初始化中国地图
+                chinaMapChart = echarts.init(document.getElementById('chinaMapChart'));
+                // 将地图的 setOption 逻辑移动到这里
+                updateChinaMapChart(); // 调用一个新的函数来更新地图图表
 
-    <div class="chart-container">
-        <h2>关键词共现分析</h2>
-        <div id="cooccurrenceChart" style="width: 100%; height: 400px;"></div>
-    </div>
+            } catch (error) {
+                console.error('加载或注册中国地图失败:', error);
+                displayError(`加载中国地图失败: ${error.message}。`);
+                // 如果地图加载失败，可以隐藏地图容器
+                document.getElementById('chinaMapChart').closest('.chart-card').style.display = 'none';
+            }
+        }
 
-    <script src="js/main.js"></script> </body>
+        // ECharts 初始化函数 (现在不再包含地图部分的初始化)
+        function initOtherCharts(data) {
+            // 关键：在 ECharts 初始化前添加一个微小延迟，确保 DOM 元素已经完全渲染并获取到正确的尺寸
+            setTimeout(() => {
+                try {
+                    sentimentOverallChart = echarts.init(document.getElementById('sentimentOverallChart'));
+                    postsPerHourChart = echarts.init(document.getElementById('postsPerHourChart'));
+                    ipLocationCountsChart = echarts.init(document.getElementById('ipLocationCountsChart'));
+                    genderRatioChart = echarts.init(document.getElementById('genderRatioChart'));
+                    maleSentimentChart = echarts.init(document.getElementById('maleSentimentChart')); // 新增
+                    femaleSentimentChart = echarts.init(document.getElementById('femaleSentimentChart')); // 新增
+                    sharesByIpLocationChart = echarts.init(document.getElementById('sharesByIpLocationChart'));
+                    hotPostsSentimentChart = echarts.init(document.getElementById('hotPostsSentimentChart'));
+                    wordCloudChart = echarts.init(document.getElementById('wordCloudChart'));
+
+                    // --- 1. 整体情感倾向分布（饼图） ---
+                    const sentimentOverallData = Object.keys(data.sentiment_overall_counts).map(key => ({
+                        name: key === 'positive' ? '积极' : (key === 'neutral' ? '中性' : '消极'),
+                        value: data.sentiment_overall_counts[key]
+                    }));
+                    sentimentOverallChart.setOption({
+                        tooltip: { trigger: 'item' },
+                        legend: { orient: 'vertical', left: 'left' },
+                        series: [{
+                            name: '情感分布',
+                            type: 'pie',
+                            radius: '50%',
+                            data: sentimentOverallData,
+                            emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                        }]
+                    });
+
+                    // --- 2. 每小时发帖量趋势（折线图） ---
+                    postsPerHourChart.setOption({
+                        tooltip: { trigger: 'axis' },
+                        xAxis: {
+                            type: 'category',
+                            data: data.posts_per_hour.x_data.map(h => `${h}点`), // 添加单位
+                            name: '时间'
+                        },
+                        yAxis: { type: 'value', name: '发帖量' },
+                        series: [{
+                            name: data.posts_per_hour.series_name,
+                            type: 'line', // 也可以改为 'bar'
+                            data: data.posts_per_hour.series_data,
+                            smooth: true // 平滑曲线
+                        }]
+                    });
+
+                    // --- 3. IP 归属地发帖量分布（柱状图 - 取前10个） ---
+                    const ipDataPairs = data.ip_location_counts.x_data.map((loc, index) => ({
+                        location: loc,
+                        count: data.ip_location_counts.series_data[index]
+                    })).sort((a, b) => b.count - a.count).slice(0, 10); // 取前10并排序
+
+                    ipLocationCountsChart.setOption({
+                        tooltip: { trigger: 'axis' },
+                        xAxis: {
+                            type: 'category',
+                            data: ipDataPairs.map(item => item.location),
+                            axisLabel: { rotate: 45, interval: 0 } // 标签旋转并强制显示所有标签
+                        },
+                        yAxis: { type: 'value', name: '发帖量' },
+                        series: [{
+                            name: data.ip_location_counts.series_name,
+                            type: 'bar',
+                            data: ipDataPairs.map(item => item.count)
+                        }]
+                    });
+
+                    // --- 4. 性别比例（饼图） ---
+                    const genderData = [
+                        { name: '男性', value: data.gender_ratio.m },
+                        { name: '女性', value: data.gender_ratio.f }
+                    ];
+                    genderRatioChart.setOption({
+                        tooltip: { trigger: 'item' },
+                        legend: { orient: 'vertical', left: 'left' },
+                        series: [{
+                            name: '性别比例',
+                            type: 'pie',
+                            radius: '50%',
+                            data: genderData,
+                            emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                        }]
+                    });
+
+                    // --- 5. 男性情感倾向饼状图 ---
+                    const maleSentimentData = Object.keys(data.sentiment_per_gender.m).map(key => ({
+                        name: key === 'positive' ? '积极' : (key === 'neutral' ? '中性' : '消极'),
+                        value: data.sentiment_per_gender.m[key]
+                    }));
+                    maleSentimentChart.setOption({
+                        title: {
+                            text: '', // 标题已在h2中
+                            left: 'center'
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b}: {c} ({d}%)'
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left',
+                            data: ['积极', '中性', '消极']
+                        },
+                        series: [
+                            {
+                                name: '男性情感倾向',
+                                type: 'pie',
+                                radius: '50%',
+                                data: maleSentimentData,
+                                emphasis: {
+                                    itemStyle: {
+                                        shadowBlur: 10,
+                                        shadowOffsetX: 0,
+                                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                }
+                            }
+                        ]
+                    });
+
+                    // --- 6. 女性情感倾向饼状图 ---
+                    const femaleSentimentData = Object.keys(data.sentiment_per_gender.f).map(key => ({
+                        name: key === 'positive' ? '积极' : (key === 'neutral' ? '中性' : '消极'),
+                        value: data.sentiment_per_gender.f[key]
+                    }));
+                    femaleSentimentChart.setOption({
+                        title: {
+                            text: '', // 标题已在h2中
+                            left: 'center'
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b}: {c} ({d}%)'
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left',
+                            data: ['积极', '中性', '消极']
+                        },
+                        series: [
+                            {
+                                name: '女性情感倾向',
+                                type: 'pie',
+                                radius: '50%',
+                                data: femaleSentimentData,
+                                emphasis: {
+                                    itemStyle: {
+                                        shadowBlur: 10,
+                                        shadowOffsetX: 0,
+                                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                }
+                            }
+                        ]
+                    });
+
+                    // --- 7. 按 IP 归属地分享总量（柱状图 - 取前10个） ---
+                    const sharesDataPairs = data.shares_by_ip_location.x_data.map((loc, index) => ({
+                        location: loc,
+                        shares: data.shares_by_ip_location.series_data[index]
+                    })).sort((a, b) => b.shares - a.shares).slice(0, 10); // 取前10并排序
+
+                    sharesByIpLocationChart.setOption({
+                        tooltip: { trigger: 'axis' },
+                        xAxis: {
+                            type: 'category',
+                            data: sharesDataPairs.map(item => item.location),
+                            axisLabel: { rotate: 45, interval: 0 }
+                        },
+                        yAxis: { type: 'value', name: '分享总量' },
+                        series: [{
+                            name: data.shares_by_ip_location.series_name,
+                            type: 'bar',
+                            data: sharesDataPairs.map(item => item.shares)
+                        }]
+                    });
+
+                    // --- 8. 热帖情感倾向（饼图） ---
+                    const hotPostsSentimentData = Object.keys(data.hot_posts_sentiment_counts).map(key => ({
+                        name: key === 'positive' ? '积极' : (key === 'neutral' ? '中性' : '消极'),
+                        value: data.hot_posts_sentiment_counts[key]
+                    }));
+                    hotPostsSentimentChart.setOption({
+                        tooltip: { trigger: 'item' },
+                        legend: { orient: 'vertical', left: 'left' },
+                        series: [{
+                            name: '热帖情感',
+                            type: 'pie',
+                            radius: '50%',
+                            data: hotPostsSentimentData,
+                            emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                        }]
+                    });
+
+                    // --- 9. 高频词词云图 ---
+                    const wordCloudData = data.frequent_words_sentiment.map(item => ({
+                        name: item.word,
+                        value: item.count,
+                        itemStyle: {
+                            color: item.sentiment === 'positive' ? '#27ae60' : (item.sentiment === 'negative' ? '#e74c3c' : '#34495e')
+                        }
+                    }));
+
+                    wordCloudChart.setOption({
+                        tooltip: {
+                            formatter: function (params) {
+                                return `${params.name}: ${params.value}次`;
+                            }
+                        },
+                        series: [{
+                            type: 'wordCloud',
+                            gridSize: 10,
+                            sizeRange: [12, 60],
+                            rotationRange: [-45, 45],
+                            shape: 'pentagon',
+                            drawOutOfBound: false,
+                            textStyle: {
+                                normal: {
+                                    fontFamily: 'sans-serif',
+                                    fontWeight: 'bold',
+                                }
+                            },
+                            emphasis: {
+                                focus: 'self',
+                                textStyle: {
+                                    shadowBlur: 10,
+                                    shadowColor: '#333'
+                                }
+                            },
+                            data: wordCloudData
+                        }]
+                    });
+
+                    // --- 其他关键指标图表（柱状图：点赞/评论/分享百分位） ---
+                    if (otherMetricsChartInstance) otherMetricsChartInstance.dispose();
+                    otherMetricsChartInstance = echarts.init(document.getElementById('otherMetricsChart'));
+                    const percentileData = [
+                        { name: '点赞', value: data.interaction_percentiles.likes || 0 },
+                        { name: '评论', value: data.interaction_percentiles.comments || 0 },
+                        { name: '分享', value: data.interaction_percentiles.shares || 0 }
+                    ];
+                    otherMetricsChartInstance.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: '{b}: {c} 百分位'
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: percentileData.map(item => item.name),
+                            name: '互动类型'
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: '百分位'
+                        },
+                        series: [{
+                            name: '百分位',
+                            type: 'bar',
+                            barWidth: '40%',
+                            data: percentileData.map(item => item.value),
+                            itemStyle: {
+                                color: '#2A5CAA'
+                            }
+                        }]
+                    });
+
+                    // --- 覆盖文字信息填充 ---
+                    document.getElementById('highLikesCount').textContent = data.extremely_high_likes_count !== undefined
+                        ? data.extremely_high_likes_count.toLocaleString()
+                        : 'N/A';
+                    document.getElementById('avgShareConversion').textContent = data.average_share_conversion_rate !== undefined
+                        ? (data.average_share_conversion_rate * 100).toFixed(2) + '%'
+                        : 'N/A';
+                    document.getElementById('eventStages').textContent = data.event_stages.stages_description || 'N/A';
+
+                    // --- 高转化率内容示例 ---
+                    const examples = data.high_conversion_content_examples || [];
+                    document.getElementById('exampleCount').textContent = examples.length;
+                    const highConversionExamplesDiv = document.getElementById('highConversionExamples');
+                    highConversionExamplesDiv.innerHTML = '';
+                    if (Array.isArray(examples) && examples.length > 0) {
+                        examples.forEach(item => {
+                            const card = document.createElement('div');
+                            card.className = 'example-card';
+                            card.innerHTML = `
+                                <p><strong>内容:</strong> ${item.content || 'N/A'}</p>
+                                <p><strong>情感:</strong> ${item.sentiment === 'positive' ? '积极' : (item.sentiment === 'negative' ? '消极' : '中性')}</p>
+                                <p><strong>转化率:</strong> ${item.share_conversion_rate !== undefined ? (item.share_conversion_rate * 100).toFixed(2) + '%' : 'N/A'}</p>
+                            `;
+                            highConversionExamplesDiv.appendChild(card);
+                        });
+                    } else {
+                        const noDataP = document.createElement('p');
+                        noDataP.textContent = '暂无高转化率内容示例。';
+                        highConversionExamplesDiv.appendChild(noDataP);
+                    }
+                } catch (e) {
+                    console.error("ECharts 初始化失败:", e);
+                    displayError(`图表初始化失败: ${e.message}。请检查ECharts容器是否可见且有正确尺寸。`);
+                }
+            }, 0);
+        }
+
+        // 新增：用于更新中国地图图表数据的函数
+        let globalAnalysisData = null; // 用于存储从Flask获取的全局数据
+
+        function updateChinaMapChart() {
+            if (!chinaMapChart || !globalAnalysisData) {
+                console.warn('中国地图图表或数据未准备好，跳过更新。');
+                return;
+            }
+
+            const chinaMapData = globalAnalysisData.province_post_counts; // 从全局数据中获取地图数据
+
+            // 确保地图数据不为空，且有有效值，以便计算 max 值
+            const values = chinaMapData.map(item => item.value || 0);
+            const maxVal = values.length > 0 ? Math.max(...values) : 1;
+
+            chinaMapChart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}<br/>发帖量: {c}'
+                },
+                visualMap: {
+                    min: 0,
+                    max: maxVal,
+                    left: 'left',
+                    top: 'bottom',
+                    text: ['高', '低'],
+                    calculable: true,
+                    inRange: {
+                        color: ['#e0ffff', '#006edd']
+                    }
+                },
+                series: [
+                    {
+                        name: '发帖量',
+                        type: 'map',
+                        map: 'china',
+                        roam: false,
+                        label: {
+                            show: true,
+                            color: '#333',
+                            fontSize: 10
+                        },
+                        itemStyle: {
+                            areaColor: '#f3f3f3',
+                            borderColor: '#aaa'
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                color: '#fff'
+                            },
+                            itemStyle: {
+                                areaColor: '#2a5caa'
+                            }
+                        },
+                            data: chinaMapData
+                    }
+                ]
+            });
+        }
+
+
+        // 数据获取和图表渲染的入口
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch(FLASK_API_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP 错误: ${response.status} ${response.statusText}. 可能是Flask应用未运行，或防火墙未开放。`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('成功从 Flask 获取到的数据:', data);
+                    globalAnalysisData = data; // 存储全局数据
+                    initOtherCharts(data); // 初始化除地图外的其他图表
+                    loadAndRegisterChinaMap(); // 异步加载并注册中国地图
+                })
+                .catch(error => {
+                    console.error('获取数据时发生错误:', error);
+                    displayError(`加载数据失败: ${error.message}。请检查虚拟机IP、端口、Flask应用是否运行，以及HDFS文件是否存在且格式正确。`);
+                });
+        });
+
+
+        // 监听窗口大小变化以调整 ECharts 图表大小
+        window.addEventListener('resize', function() {
+            if (sentimentOverallChart) sentimentOverallChart.resize();
+            if (postsPerHourChart) postsPerHourChart.resize();
+            if (ipLocationCountsChart) ipLocationCountsChart.resize();
+            if (genderRatioChart) genderRatioChart.resize();
+            if (maleSentimentChart) maleSentimentChart.resize(); // 新增
+            if (femaleSentimentChart) femaleSentimentChart.resize(); // 新增
+            if (sharesByIpLocationChart) sharesByIpLocationChart.resize();
+            if (hotPostsSentimentChart) hotPostsSentimentChart.resize();
+            if (wordCloudChart) wordCloudChart.resize();
+            if (chinaMapChart) chinaMapChart.resize();
+            if (otherMetricsChartInstance) otherMetricsChartInstance.resize(); // 新增
+        });
+    </script>
+</body>
 </html>

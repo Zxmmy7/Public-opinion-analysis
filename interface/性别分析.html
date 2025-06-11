@@ -35,7 +35,6 @@
         }
     </script>
     <style>
-        /* 保留大部分原始CSS样式 */
         :where([class^="ri-"])::before { content: "\f3c2"; }
 
         body {
@@ -64,7 +63,7 @@
         }
 
         .nav-link.active::after {
-            display: none;
+            display: none; /* Active link has solid background, no underline */
         }
 
         .tool-card {
@@ -74,11 +73,6 @@
         .tool-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        .tool-card.active {
-            background-color: #e0f2f7;
-            border-left: 5px solid #2A5CAA;
         }
 
         .ripple {
@@ -124,43 +118,44 @@
             animation: slideIn 0.3s forwards;
         }
 
+        /* 针对侧边栏和主内容区域的调整 */
         .flex-container {
             display: flex;
-            padding-top: 72px;
-            height: 100vh;
-            overflow: hidden;
+            padding-top: 72px; /* 导航栏高度 */
+            height: 100vh; /* 确保占据整个视口高度 */
+            overflow: hidden; /* 防止内部滚动条影响外部布局 */
         }
 
         .sidebar {
-            width: 200px;
-            flex-shrink: 0;
+            width: 200px; /* 调整侧边栏宽度为200px */
+            flex-shrink: 0; /* 防止侧边栏被压缩 */
             background-color: #ffffff;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            overflow-y: auto;
-            height: calc(100vh - 72px);
+            padding: 20px; /* 调整内边距，使其更美观 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 轻微阴影 */
+            overflow-y: auto; /* 允许侧边栏内容滚动 */
+            height: calc(100vh - 72px); /* 占据剩余高度 */
         }
 
         .main-content-container {
-            flex-grow: 1;
+            flex-grow: 1; /* 让主内容区占据剩余空间 */
             padding: 20px;
-            background-color: #f5f7fa;
-            box-shadow: none;
-            margin: 0;
-            max-width: none;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 20px;
-            overflow-y: auto;
-            height: calc(100vh - 72px);
+            background-color: #f5f7fa; /* 与主页背景色保持一致 */
+            box-shadow: none; /* 移除容器阴影，让卡片自己带阴影 */
+            margin: 0; /* 移除外边距 */
+            max-width: none; /* 移除最大宽度限制，让其自适应 */
+            display: grid; /* 使用 CSS Grid 布局 */
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); /* 自动适应列宽，每列最小450px */
+            gap: 20px; /* 网格间距 */
+            overflow-y: auto; /* 允许内容滚动 */
+            height: calc(100vh - 72px); /* 占据剩余高度 */
         }
 
-        h1.report-title {
+        h1.report-title { /* 为报告标题添加特定类名，避免与主页H1冲突 */
             text-align: center;
             color: #2c3e50;
-            margin-top: 0px;
+            margin-top: 0px; /* 调整标题上边距 */
             margin-bottom: 20px;
-            grid-column: 1 / -1;
+            grid-column: 1 / -1; /* 让标题占据所有列 */
         }
         .chart-card {
             background-color: #ffffff;
@@ -168,7 +163,7 @@
             border-radius: 8px;
             padding: 15px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            height: 400px;
+            height: 400px; /* 显式设置一个固定高度 */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -176,8 +171,8 @@
         }
         .chart {
             width: 100%;
-            height: 100%;
-            min-height: 250px;
+            height: 100%; /* 让图表占据父容器（chart-card）的全部高度 */
+            min-height: 250px; /* 确保即使在小屏幕下也有最小高度 */
         }
         .error-message {
             color: #e74c3c;
@@ -190,8 +185,8 @@
             border-radius: 8px;
             text-align: center;
             font-size: 1.1em;
-            display: none;
-            grid-column: 1 / -1;
+            display: none; /* 默认隐藏 */
+            grid-column: 1 / -1; /* 错误消息占据所有列 */
         }
         .info-card {
             background-color: #ecf0f1;
@@ -246,7 +241,7 @@
         </div>
 
         <div class="flex space-x-8">
-            <a href="主页.html" class="nav-link text-gray-700 hover:text-primary px-4 py-2 rounded-button whitespace-nowrap">首页</a>
+            <a href="主页.html" class="nav-link text-gray-700 hover:text-primary px-4 py-2 whitespace-nowrap">首页</a>
             <a href="机器学习及系统性能.html" class="nav-link text-gray-700 hover:text-primary px-4 py-2 whitespace-nowrap">机器学习及系统性能</a>
             <a href="舆情报告.html" class="nav-link text-gray-700 hover:text-primary px-4 py-2 whitespace-nowrap">舆情报告</a>
         </div>
@@ -273,7 +268,7 @@
                     <span class="tool-text ml-3 text-gray-800 font-medium">情感分析</span>
                 </a>
 
-                <a href="性别分析.html" class="tool-card bg-white rounded-lg shadow-md p-4 flex items-center cursor-pointer hover:shadow-lg transition duration-300 ease-in-out active" style="animation-delay: 0.2s">
+                <a href="性别分析.html" class="tool-card bg-white rounded-lg shadow-md p-4 flex items-center cursor-pointer hover:shadow-lg transition duration-300 ease-in-out" style="animation-delay: 0.2s">
                     <div class="w-10 h-10 flex items-center justify-center bg-green-100 rounded-full text-green-600 flex-shrink-0">
                         <i class="ri-user-line ri-lg"></i>
                     </div>
@@ -298,28 +293,28 @@
             <h2 class="text-gray-800 font-bold mt-8 mb-4 sidebar-animation">快捷操作</h2>
 
             <div class="space-y-4">
-                <a href="#" class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.5s">
+                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.5s">
                     <div class="flex items-center">
                         <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-full text-red-600">
                             <i class="ri-file-chart-line ri-lg"></i>
                         </div>
                         <span class="tool-text ml-3 text-gray-800">生成报告</span>
                     </div>
-                </a>
+                </div>
 
-                <a href="#" class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.6s">
+                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.6s">
                     <div class="flex items-center">
                         <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-full text-indigo-600">
                             <i class="ri-database-2-line ri-lg"></i>
                         </div>
                         <span class="tool-text ml-3 text-gray-800">数据导出</span>
                     </div>
-                </a>
+                </div>
             </div>
         </aside>
 
         <main class="main-content-container">
-            <h1 class="report-title">蜜雪冰城社交媒体数据 - 性别分析</h1>
+            <h1 class="report-title">性别分析报告</h1>
 
             <div id="error-message" class="error-message"></div>
 
@@ -327,29 +322,40 @@
                 <h2>用户性别比例</h2>
                 <div id="genderRatioChart" class="chart"></div>
             </div>
-            </main>
+
+            <div class="chart-card">
+                <h2>男性情感倾向</h2>
+                <div id="maleSentimentChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <h2>女性情感倾向</h2>
+                <div id="femaleSentimentChart" class="chart"></div>
+            </div>
+
+        </main>
     </div>
 
     <script type="text/javascript">
-        const FLASK_API_URL = 'http://192.168.88.11:5000/get_analysis_data';
+        const FLASK_API_URL = 'http://192.168.88.11:5000/get_analysis_data'; // 请确保这个URL是正确的
+
         const errorMessageDiv = document.getElementById('error-message');
 
         function displayError(message) {
             errorMessageDiv.textContent = message;
             errorMessageDiv.style.display = 'block';
-            document.querySelector('.main-content-container').style.display = 'none';
+            document.querySelector('.main-content-container').style.display = 'none'; // 隐藏图表容器
         }
 
         let genderRatioChartInstance;
+        let maleSentimentChartInstance; // 新增实例变量
+        let femaleSentimentChartInstance; // 新增实例变量
 
-        function initGenderCharts(data) {
-            setTimeout(() => {
+        function initCharts(data) {
+            setTimeout(() => { // 添加一个微小延迟，确保DOM渲染
                 try {
-                    if (genderRatioChartInstance) genderRatioChartInstance.dispose();
-
+                    // 初始化用户性别比例图表
                     genderRatioChartInstance = echarts.init(document.getElementById('genderRatioChart'));
-
-                    // --- 用户性别比例（饼图） ---
                     const genderData = [
                         { name: '男性', value: data.gender_ratio.m },
                         { name: '女性', value: data.gender_ratio.f }
@@ -366,9 +372,83 @@
                         }]
                     });
 
+                    // 初始化男性情感倾向饼状图
+                    maleSentimentChartInstance = echarts.init(document.getElementById('maleSentimentChart'));
+                    const maleSentimentData = Object.keys(data.sentiment_per_gender.m).map(key => ({
+                        name: key === 'positive' ? '积极' : (key === 'neutral' ? '中性' : '消极'),
+                        value: data.sentiment_per_gender.m[key]
+                    }));
+                    maleSentimentChartInstance.setOption({
+                        title: {
+                            text: '', // 标题已在h2中
+                            left: 'center'
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b}: {c} ({d}%)'
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left',
+                            data: ['积极', '中性', '消极']
+                        },
+                        series: [
+                            {
+                                name: '男性情感倾向',
+                                type: 'pie',
+                                radius: '50%',
+                                data: maleSentimentData,
+                                emphasis: {
+                                    itemStyle: {
+                                        shadowBlur: 10,
+                                        shadowOffsetX: 0,
+                                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                }
+                            }
+                        ]
+                    });
+
+                    // 初始化女性情感倾向饼状图
+                    femaleSentimentChartInstance = echarts.init(document.getElementById('femaleSentimentChart'));
+                    const femaleSentimentData = Object.keys(data.sentiment_per_gender.f).map(key => ({
+                        name: key === 'positive' ? '积极' : (key === 'neutral' ? '中性' : '消极'),
+                        value: data.sentiment_per_gender.f[key]
+                    }));
+                    femaleSentimentChartInstance.setOption({
+                        title: {
+                            text: '', // 标题已在h2中
+                            left: 'center'
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b}: {c} ({d}%)'
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left',
+                            data: ['积极', '中性', '消极']
+                        },
+                        series: [
+                            {
+                                name: '女性情感倾向',
+                                type: 'pie',
+                                radius: '50%',
+                                data: femaleSentimentData,
+                                emphasis: {
+                                    itemStyle: {
+                                        shadowBlur: 10,
+                                        shadowOffsetX: 0,
+                                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                }
+                            }
+                        ]
+                    });
+
                 } catch (e) {
                     console.error("ECharts 初始化失败:", e);
-                    displayError(`图表初始化失败: ${e.message}。`);
+                    displayError(`图表初始化失败: ${e.message}。请检查ECharts容器是否可见且有正确尺寸。`);
                 }
             }, 0);
         }
@@ -383,7 +463,7 @@
                 })
                 .then(data => {
                     console.log('成功从 Flask 获取到的数据:', data);
-                    initGenderCharts(data);
+                    initCharts(data);
                 })
                 .catch(error => {
                     console.error('获取数据时发生错误:', error);
@@ -416,6 +496,8 @@
 
         window.addEventListener('resize', function() {
             if (genderRatioChartInstance) genderRatioChartInstance.resize();
+            if (maleSentimentChartInstance) maleSentimentChartInstance.resize(); // 新增
+            if (femaleSentimentChartInstance) femaleSentimentChartInstance.resize(); // 新增
         });
     </script>
 </body>

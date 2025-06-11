@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>事件分析 - 舆情洞察</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com/3.4.16"></script>
     <script>
         tailwind.config = {
@@ -35,7 +35,6 @@
         }
     </script>
     <style>
-        /* 保留大部分原始CSS样式 */
         :where([class^="ri-"])::before { content: "\f3c2"; }
 
         body {
@@ -162,23 +161,23 @@
             margin-bottom: 20px;
             grid-column: 1 / -1;
         }
+
         .chart-card {
             background-color: #ffffff;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             padding: 15px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            height: 400px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
         }
+
         .chart {
             width: 100%;
             height: 100%;
             min-height: 250px;
         }
+
         .error-message {
             color: #e74c3c;
             background-color: #ffebee;
@@ -193,17 +192,40 @@
             display: none;
             grid-column: 1 / -1;
         }
-        .info-card {
+
+        .info-overlay {
             background-color: #ecf0f1;
-            border-left: 5px solid #3498db;
-            padding: 15px;
-            border-radius: 5px;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
             font-size: 0.9em;
-            line-height: 1.6;
-            margin-bottom: 15px;
+            line-height: 1.5;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
         }
-        .info-card p {
-            margin: 5px 0;
+
+        .info-item {
+            width: 48%;
+            margin-bottom: 8px;
+        }
+
+        .examples-container {
+            background-color: #ffffff;
+            border: 1px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .example-card {
+            background-color: #f9fafb;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 8px;
+            margin-bottom: 8px;
         }
 
         /* 响应式调整 */
@@ -233,7 +255,7 @@
                 padding: 10px;
             }
             .chart-card {
-                height: 300px;
+                height: auto;
             }
         }
     </style>
@@ -319,32 +341,45 @@
         </aside>
 
         <main class="main-content-container">
-            <h1 class="report-title">蜜雪冰城社交媒体数据 - 事件分析</h1>
+            <h1 class="report-title">社交媒体数据 - 事件分析</h1>
 
             <div id="error-message" class="error-message"></div>
 
+            <!-- 每小时发帖量趋势 -->
             <div class="chart-card">
                 <h2>每小时发帖量趋势</h2>
                 <div id="postsPerHourChart" class="chart"></div>
             </div>
-            <div class="chart-card" style="grid-column: span 2;">
+
+            <!-- 其他关键指标 & 高转化率内容示例 -->
+            <div class="chart-card" style="grid-column: span 2; height: 600px;">
+                <!-- 其他关键指标图表 -->
                 <h2>其他关键指标</h2>
-                <div class="info-card">
-                    <p><strong>互动量百分位（点赞/评论/分享）：</strong></p>
-                    <ul>
-                        <li>点赞: <span id="likesPercentile"></span></li>
-                        <li>评论: <span id="commentsPercentile"></span></li>
-                        <li>分享: <span id="sharesPercentile"></span></li>
-                    </ul>
-                    <p><strong>点赞数极高的帖子数量:</strong> <span id="highLikesCount"></span></p>
-                    <p><strong>平均分享转化率:</strong> <span id="avgShareConversion"></span></p>
-                    <p><strong>事件阶段分析 (简化识别):</strong> <span id="eventStages"></span></p>
+                <div id="otherMetricsChart" class="chart" style="height: 50%;"></div>
+
+                <!-- 覆盖在图表下方的文字信息 -->
+                <div class="info-overlay">
+                    <div class="info-item">
+                        <p><strong>点赞数极高的帖子数量:</strong> <span id="highLikesCount">—</span></p>
+                    </div>
+                    <div class="info-item">
+                        <p><strong>平均分享转化率:</strong> <span id="avgShareConversion">—</span></p>
+                    </div>
+                    <div class="info-item">
+                        <p><strong>事件阶段分析:</strong> <span id="eventStages">—</span></p>
+                    </div>
+                    <div class="info-item">
+                        <p><strong>高转化率示例总数:</strong> <span id="exampleCount">—</span></p>
+                    </div>
                 </div>
-                <h2>高转化率内容示例</h2>
-                <div id="highConversionExamples" style="font-size: 0.9em; max-height: 250px; overflow-y: auto;">
+
+                <!-- 高转化率内容示例 -->
+                <h2 class="mt-4">高转化率内容示例</h2>
+                <div id="highConversionExamples" class="examples-container">
+                    <!-- 动态插入示例卡片 -->
                 </div>
             </div>
-            </main>
+        </main>
     </div>
 
     <script type="text/javascript">
@@ -358,56 +393,93 @@
         }
 
         let postsPerHourChartInstance;
+        let otherMetricsChartInstance;
 
         function initEventCharts(data) {
             setTimeout(() => {
                 try {
-                    if (postsPerHourChartInstance) postsPerHourChartInstance.dispose();
-
-                    postsPerHourChartInstance = echarts.init(document.getElementById('postsPerHourChart'));
-
                     // --- 每小时发帖量趋势（折线图） ---
+                    if (postsPerHourChartInstance) postsPerHourChartInstance.dispose();
+                    postsPerHourChartInstance = echarts.init(document.getElementById('postsPerHourChart'));
                     postsPerHourChartInstance.setOption({
                         tooltip: { trigger: 'axis' },
                         xAxis: {
                             type: 'category',
-                            data: data.posts_per_hour.x_data.map(h => `${h}点`), // 添加单位
+                            data: data.posts_per_hour.x_data.map(h => `${h}点`),
                             name: '时间'
                         },
                         yAxis: { type: 'value', name: '发帖量' },
                         series: [{
                             name: data.posts_per_hour.series_name,
-                            type: 'line', // 也可以改为 'bar'
+                            type: 'line',
                             data: data.posts_per_hour.series_data,
-                            smooth: true // 平滑曲线
+                            smooth: true
                         }]
                     });
 
-                    // --- 其他关键指标和高转化率内容展示 ---
-                    document.getElementById('likesPercentile').textContent = data.interaction_percentiles.likes ? data.interaction_percentiles.likes.toLocaleString() : 'N/A';
-                    document.getElementById('commentsPercentile').textContent = data.interaction_percentiles.comments ? data.interaction_percentiles.comments.toLocaleString() : 'N/A';
-                    document.getElementById('sharesPercentile').textContent = data.interaction_percentiles.shares ? data.interaction_percentiles.shares.toLocaleString() : 'N/A';
-                    document.getElementById('highLikesCount').textContent = data.extremely_high_likes_count !== undefined ? data.extremely_high_likes_count.toLocaleString() : 'N/A';
-                    document.getElementById('avgShareConversion').textContent = data.average_share_conversion_rate !== undefined ? (data.average_share_conversion_rate * 100).toFixed(2) + '%' : 'N/A';
+                    // --- 其他关键指标图表（柱状图：点赞/评论/分享百分位） ---
+                    if (otherMetricsChartInstance) otherMetricsChartInstance.dispose();
+                    otherMetricsChartInstance = echarts.init(document.getElementById('otherMetricsChart'));
+                    const percentileData = [
+                        { name: '点赞', value: data.interaction_percentiles.likes || 0 },
+                        { name: '评论', value: data.interaction_percentiles.comments || 0 },
+                        { name: '分享', value: data.interaction_percentiles.shares || 0 }
+                    ];
+                    otherMetricsChartInstance.setOption({
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: '{b}: {c} 百分位'
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: percentileData.map(item => item.name),
+                            name: '互动类型'
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: '百分位'
+                        },
+                        series: [{
+                            name: '百分位',
+                            type: 'bar',
+                            barWidth: '40%',
+                            data: percentileData.map(item => item.value),
+                            itemStyle: {
+                                color: '#2A5CAA'
+                            }
+                        }]
+                    });
+
+                    // --- 覆盖文字信息填充 ---
+                    document.getElementById('highLikesCount').textContent = data.extremely_high_likes_count !== undefined
+                        ? data.extremely_high_likes_count.toLocaleString()
+                        : 'N/A';
+                    document.getElementById('avgShareConversion').textContent = data.average_share_conversion_rate !== undefined
+                        ? (data.average_share_conversion_rate * 100).toFixed(2) + '%'
+                        : 'N/A';
                     document.getElementById('eventStages').textContent = data.event_stages.stages_description || 'N/A';
 
+                    // --- 高转化率内容示例 ---
+                    const examples = data.high_conversion_content_examples || [];
+                    document.getElementById('exampleCount').textContent = examples.length;
                     const highConversionExamplesDiv = document.getElementById('highConversionExamples');
-                    if (Array.isArray(data.high_conversion_content_examples) && data.high_conversion_content_examples.length > 0) {
-                        highConversionExamplesDiv.innerHTML = '';
-                        data.high_conversion_content_examples.forEach(item => {
-                            const p = document.createElement('p');
-                            p.innerHTML = `<strong>内容:</strong> ${item.content || 'N/A'}<br>
-                                           <strong>情感:</strong> ${item.sentiment || 'N/A'}<br>
-                                           <strong>转化率:</strong> ${item.share_conversion_rate !== undefined ? (item.share_conversion_rate * 100).toFixed(2) + '%' : 'N/A'}`;
-                            p.style.marginBottom = '10px';
-                            p.style.paddingBottom = '5px';
-                            p.style.borderBottom = '1px dashed #eee';
-                            highConversionExamplesDiv.appendChild(p);
+                    highConversionExamplesDiv.innerHTML = '';
+                    if (Array.isArray(examples) && examples.length > 0) {
+                        examples.forEach(item => {
+                            const card = document.createElement('div');
+                            card.className = 'example-card';
+                            card.innerHTML = `
+                                <p><strong>内容:</strong> ${item.content || 'N/A'}</p>
+                                <p><strong>情感:</strong> ${item.sentiment === 'positive' ? '积极' : (item.sentiment === 'negative' ? '消极' : '中性')}</p>
+                                <p><strong>转化率:</strong> ${item.share_conversion_rate !== undefined ? (item.share_conversion_rate * 100).toFixed(2) + '%' : 'N/A'}</p>
+                            `;
+                            highConversionExamplesDiv.appendChild(card);
                         });
                     } else {
-                        highConversionExamplesDiv.innerHTML = '<p>暂无高转化率内容示例。</p>';
+                        const noDataP = document.createElement('p');
+                        noDataP.textContent = '暂无高转化率内容示例。';
+                        highConversionExamplesDiv.appendChild(noDataP);
                     }
-
                 } catch (e) {
                     console.error("ECharts 初始化失败:", e);
                     displayError(`图表初始化失败: ${e.message}。`);
@@ -419,23 +491,21 @@
             fetch(FLASK_API_URL)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`HTTP 错误: ${response.status} ${response.statusText}. 可能是Flask应用未运行，或防火墙未开放。`);
+                        throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
                     }
                     return response.json();
                 })
                 .then(data => {
-                    console.log('成功从 Flask 获取到的数据:', data);
                     initEventCharts(data);
                 })
                 .catch(error => {
                     console.error('获取数据时发生错误:', error);
-                    displayError(`加载数据失败: ${error.message}。请检查虚拟机IP、端口、Flask应用是否运行，以及HDFS文件是否存在且格式正确。`);
+                    displayError(`加载数据失败: ${error.message}。`);
                 });
 
-            // 导航栏激活状态设置 (针对当前页面)
+            // 导航栏激活状态
             const currentPath = window.location.pathname.split('/').pop();
-            const navLinks = document.querySelectorAll('.nav-link');
-            navLinks.forEach(link => {
+            document.querySelectorAll('.nav-link').forEach(link => {
                 if (link.getAttribute('href') === currentPath) {
                     link.classList.add('active', 'bg-primary', 'text-white', '!rounded-button');
                     link.classList.remove('text-gray-700', 'hover:text-primary');
@@ -445,9 +515,8 @@
                 }
             });
 
-            // 侧边栏激活状态设置 (针对当前页面)
-            const sidebarLinks = document.querySelectorAll('.sidebar .tool-card');
-            sidebarLinks.forEach(link => {
+            // 侧边栏激活状态
+            document.querySelectorAll('.sidebar .tool-card').forEach(link => {
                 if (link.getAttribute('href') === currentPath) {
                     link.classList.add('active');
                 } else {
@@ -458,6 +527,7 @@
 
         window.addEventListener('resize', function() {
             if (postsPerHourChartInstance) postsPerHourChartInstance.resize();
+            if (otherMetricsChartInstance) otherMetricsChartInstance.resize();
         });
     </script>
 </body>

@@ -54,7 +54,7 @@
             height: 2px;
             bottom: -2px;
             left: 0;
-            background-color: #2A5CAA;
+            background-color: #2A5CAA; /* 已修正 */
             transition: width 0.3s ease;
         }
 
@@ -201,6 +201,42 @@
             margin: 5px 0;
         }
 
+        .info-overlay {
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            line-height: 1.5;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            width: 48%;
+            margin-bottom: 8px;
+        }
+
+        .examples-container {
+            background-color: #ffffff;
+            border: 1px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .example-card {
+            background-color: #f9fafb;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+
         /* 响应式调整 */
         @media (max-width: 1024px) { /* 调整断点，例如在较小尺寸的桌面或平板上 */
             .sidebar {
@@ -233,7 +269,8 @@
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.0/dist/echarts.min.js"></script>
-</head>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
+    </head>
 <body class="bg-secondary min-h-screen">
     <nav class="fixed top-0 left-0 right-0 bg-white shadow-md z-50 px-8 py-3 flex items-center justify-between">
         <div class="flex items-center">
@@ -293,16 +330,16 @@
             <h2 class="text-gray-800 font-bold mt-8 mb-4 sidebar-animation">快捷操作</h2>
 
             <div class="space-y-4">
-                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.5s">
+                <button id="generateReportButton" class="tool-card bg-white rounded shadow p-4 sidebar-animation w-full text-left cursor-pointer hover:shadow-lg transition duration-300 ease-in-out ripple" style="animation-delay: 0.5s">
                     <div class="flex items-center">
                         <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-full text-red-600">
                             <i class="ri-file-chart-line ri-lg"></i>
                         </div>
                         <span class="tool-text ml-3 text-gray-800">生成报告</span>
                     </div>
-                </div>
+                </button>
 
-                <div class="tool-card bg-white rounded shadow p-4 sidebar-animation" style="animation-delay: 0.6s">
+                <div id="exportDataButton" class="tool-card bg-white rounded shadow p-4 sidebar-animation cursor-pointer hover:shadow-lg transition duration-300 ease-in-out" style="animation-delay: 0.6s">
                     <div class="flex items-center">
                         <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-full text-indigo-600">
                             <i class="ri-database-2-line ri-lg"></i>
@@ -314,7 +351,7 @@
         </aside>
 
         <main class="main-content-container">
-            <h1 class="report-title">蜜雪冰城社交媒体数据分析报告</h1>
+            <h1 class="report-title">社交媒体数据分析报告</h1>
 
             <div id="error-message" class="error-message"></div>
 
@@ -339,6 +376,16 @@
             </div>
 
             <div class="chart-card">
+                <h2>男性情感倾向</h2>
+                <div id="maleSentimentChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
+                <h2>女性情感倾向</h2>
+                <div id="femaleSentimentChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card">
                 <h2>按 IP 归属地分享总量</h2>
                 <div id="sharesByIpLocationChart" class="chart"></div>
             </div>
@@ -348,22 +395,38 @@
                 <div id="hotPostsSentimentChart" class="chart"></div>
             </div>
 
+            <div class="chart-card">
+                <h2>高频词词云图</h2>
+                <div id="wordCloudChart" class="chart"></div>
+            </div>
+
             <div class="chart-card" style="grid-column: span 2;">
+                <h2>中国地域发帖热度图</h2>
+                <div id="chinaMapChart" class="chart"></div>
+            </div>
+
+            <div class="chart-card" style="grid-column: span 2; height: 600px;">
                 <h2>其他关键指标</h2>
-                <div class="info-card">
-                    <p><strong>互动量百分位（点赞/评论/分享）：</strong></p>
-                    <ul>
-                        <li>点赞: <span id="likesPercentile"></span></li>
-                        <li>评论: <span id="commentsPercentile"></span></li>
-                        <li>分享: <span id="sharesPercentile"></span></li>
-                    </ul>
-                    <p><strong>点赞数极高的帖子数量:</strong> <span id="highLikesCount"></span></p>
-                    <p><strong>平均分享转化率:</strong> <span id="avgShareConversion"></span></p>
-                    <p><strong>事件阶段分析 (简化识别):</strong> <span id="eventStages"></span></p>
+                <div id="otherMetricsChart" class="chart" style="height: 50%;"></div>
+
+                <div class="info-overlay">
+                    <div class="info-item">
+                        <p><strong>点赞数极高的帖子数量:</strong> <span id="highLikesCount">—</span></p>
+                    </div>
+                    <div class="info-item">
+                        <p><strong>平均分享转化率:</strong> <span id="avgShareConversion">—</span></p>
+                    </div>
+                    <div class="info-item">
+                        <p><strong>事件阶段分析:</strong> <span id="eventStages">—</span></p>
+                    </div>
+                    <div class="info-item">
+                        <p><strong>高转化率示例总数:</strong> <span id="exampleCount">—</span></p>
+                    </div>
                 </div>
-                <h2>高转化率内容示例</h2>
-                <div id="highConversionExamples" style="font-size: 0.9em; max-height: 250px; overflow-y: auto;">
-                </div>
+
+                <h2 class="mt-4">高转化率内容示例</h2>
+                <div id="highConversionExamples" class="examples-container">
+                    </div>
             </div>
         </main>
     </div>
@@ -371,6 +434,11 @@
     <script type="text/javascript">
         // Flask 应用的 API URL
         const FLASK_API_URL = 'http://192.168.88.11:5000/get_analysis_data';
+        // 数据导出 API URL
+        const FLASK_EXPORT_API_URL = 'http://192.168.88.11:5000/download_exported_data';
+        // 报告生成 API URL
+        const FLASK_REPORT_API_URL = 'http://192.168.88.11:5000/report_with_deepseek';
+
 
         // 获取错误信息显示 DOM 元素
         const errorMessageDiv = document.getElementById('error-message');
@@ -382,24 +450,70 @@
             document.querySelector('.main-content-container').style.display = 'none'; // 隐藏图表容器
         }
 
+        // ECharts 实例变量
         let sentimentOverallChart;
         let postsPerHourChart;
         let ipLocationCountsChart;
         let genderRatioChart;
+        let maleSentimentChart;
+        let femaleSentimentChart;
         let sharesByIpLocationChart;
         let hotPostsSentimentChart;
+        let wordCloudChart;
+        let chinaMapChart;
+        let otherMetricsChartInstance;
 
-        // ECharts 初始化函数
-        function initCharts(data) {
+        let globalAnalysisData = null; // 用于存储从Flask获取的全局数据
+
+        // 定义一个异步函数来加载地图数据并初始化地图图表
+        async function loadAndRegisterChinaMap() {
+            try {
+                // *** 核心改动：修改为本地china.json文件的相对路径 ***
+                // 确保 'echarts-4.2.1-rc1-map' 文件夹与 '主页.html' 在同一目录下
+                const response = await fetch('./echarts-4.2.1-rc1-map/json/china.json');
+                if (!response.ok) {
+                    throw new Error(`Failed to load china.json from local: ${response.status} ${response.statusText}. 请检查文件路径是否正确。`);
+                }
+                const chinaJson = await response.json();
+
+                // 注册地图到 ECharts
+                echarts.registerMap('china', chinaJson);
+                console.log('ECharts 中国地图已成功注册！');
+
+                // 现在可以安全地初始化中国地图
+                // 在初始化前确保 DOM 元素存在且有尺寸
+                const chinaMapDom = document.getElementById('chinaMapChart');
+                if (chinaMapDom) {
+                    chinaMapChart = echarts.init(chinaMapDom);
+                    updateChinaMapChart(); // 调用一个新的函数来更新地图图表
+                } else {
+                    console.error("DOM 元素 'chinaMapChart' 未找到，无法初始化中国地图。");
+                }
+
+            } catch (error) {
+                console.error('加载或注册中国地图失败:', error);
+                displayError(`加载中国地图失败: ${error.message}。`);
+                // 如果地图加载失败，可以隐藏地图容器
+                const chinaMapCard = document.getElementById('chinaMapChart').closest('.chart-card');
+                if (chinaMapCard) chinaMapCard.style.display = 'none';
+            }
+        }
+
+        // ECharts 初始化函数 (现在不再包含地图部分的初始化)
+        function initOtherCharts(data) {
             // 关键：在 ECharts 初始化前添加一个微小延迟，确保 DOM 元素已经完全渲染并获取到正确的尺寸
             setTimeout(() => {
                 try {
+                    // 初始化所有图表实例，确保DOM元素存在
                     sentimentOverallChart = echarts.init(document.getElementById('sentimentOverallChart'));
                     postsPerHourChart = echarts.init(document.getElementById('postsPerHourChart'));
                     ipLocationCountsChart = echarts.init(document.getElementById('ipLocationCountsChart'));
                     genderRatioChart = echarts.init(document.getElementById('genderRatioChart'));
+                    maleSentimentChart = echarts.init(document.getElementById('maleSentimentChart'));
+                    femaleSentimentChart = echarts.init(document.getElementById('femaleSentimentChart'));
                     sharesByIpLocationChart = echarts.init(document.getElementById('sharesByIpLocationChart'));
                     hotPostsSentimentChart = echarts.init(document.getElementById('hotPostsSentimentChart'));
+                    wordCloudChart = echarts.init(document.getElementById('wordCloudChart'));
 
                     // --- 1. 整体情感倾向分布（饼图） ---
                     const sentimentOverallData = Object.keys(data.sentiment_overall_counts).map(key => ({
@@ -439,7 +553,7 @@
                     const ipDataPairs = data.ip_location_counts.x_data.map((loc, index) => ({
                         location: loc,
                         count: data.ip_location_counts.series_data[index]
-                    })).sort((a, b) => b.count - a.count).slice(0, 10);
+                    })).sort((a, b) => b.count - a.count).slice(0, 10); // 取前10并排序
 
                     ipLocationCountsChart.setOption({
                         tooltip: { trigger: 'axis' },
@@ -473,7 +587,79 @@
                         }]
                     });
 
-                    // --- 5. 按 IP 归属地分享总量（柱状图 - 取前10个） ---
+                    // --- 5. 男性情感倾向饼状图 ---
+                    const maleSentimentData = Object.keys(data.sentiment_per_gender.m).map(key => ({
+                        name: key === 'positive' ? '积极' : (key === 'neutral' ? '中性' : '消极'),
+                        value: data.sentiment_per_gender.m[key]
+                    }));
+                    maleSentimentChart.setOption({
+                        title: {
+                            text: '', // 标题已在h2中
+                            left: 'center'
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b}: {c} ({d}%)'
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left',
+                            data: ['积极', '中性', '消极']
+                        },
+                        series: [
+                            {
+                                name: '男性情感倾向',
+                                type: 'pie',
+                                radius: '50%',
+                                data: maleSentimentData,
+                                emphasis: {
+                                    itemStyle: {
+                                        shadowBlur: 10,
+                                        shadowOffsetX: 0,
+                                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                }
+                            }
+                        ]
+                    });
+
+                    // --- 6. 女性情感倾向饼状图 ---
+                    const femaleSentimentData = Object.keys(data.sentiment_per_gender.f).map(key => ({
+                        name: key === 'positive' ? '积极' : (key === 'neutral' ? '中性' : '消极'),
+                        value: data.sentiment_per_gender.f[key]
+                    }));
+                    femaleSentimentChart.setOption({
+                        title: {
+                            text: '', // 标题已在h2中
+                            left: 'center'
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b}: {c} ({d}%)'
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left',
+                            data: ['积极', '中性', '消极']
+                        },
+                        series: [
+                            {
+                                name: '女性情感倾向',
+                                type: 'pie',
+                                radius: '50%',
+                                data: femaleSentimentData,
+                                emphasis: {
+                                    itemStyle: {
+                                        shadowBlur: 10,
+                                        shadowOffsetX: 0,
+                                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                }
+                            }
+                        ]
+                    });
+
+                    // --- 7. 按 IP 归属地分享总量（柱状图 - 取前10个） ---
                     const sharesDataPairs = data.shares_by_ip_location.x_data.map((loc, index) => ({
                         location: loc,
                         shares: data.shares_by_ip_location.series_data[index]
@@ -494,7 +680,7 @@
                         }]
                     });
 
-                    // --- 6. 热帖情感倾向（饼图） ---
+                    // --- 8. 热帖情感倾向（饼图） ---
                     const hotPostsSentimentData = Object.keys(data.hot_posts_sentiment_counts).map(key => ({
                         name: key === 'positive' ? '积极' : (key === 'neutral' ? '中性' : '消极'),
                         value: data.hot_posts_sentiment_counts[key]
@@ -511,66 +697,322 @@
                         }]
                     });
 
-                    // --- 其他关键指标和高转化率内容展示 ---
-                    document.getElementById('likesPercentile').textContent = data.interaction_percentiles.likes ? data.interaction_percentiles.likes.toLocaleString() : 'N/A';
-                    document.getElementById('commentsPercentile').textContent = data.interaction_percentiles.comments ? data.interaction_percentiles.comments.toLocaleString() : 'N/A';
-                    document.getElementById('sharesPercentile').textContent = data.interaction_percentiles.shares ? data.interaction_percentiles.shares.toLocaleString() : 'N/A';
-                    document.getElementById('highLikesCount').textContent = data.extremely_high_likes_count !== undefined ? data.extremely_high_likes_count.toLocaleString() : 'N/A';
-                    document.getElementById('avgShareConversion').textContent = data.average_share_conversion_rate !== undefined ? (data.average_share_conversion_rate * 100).toFixed(2) + '%' : 'N/A';
-                    document.getElementById('eventStages').textContent = data.event_stages.stages_description || 'N/A';
+                    // --- 9. 高频词词云图 ---
+                    const wordCloudData = data.frequent_words_sentiment.map(item => ({
+                        name: item.word,
+                        value: item.count,
+                        itemStyle: {
+                            color: item.sentiment === 'positive' ? '#27ae60' : (item.sentiment === 'negative' ? '#e74c3c' : '#34495e')
+                        }
+                    }));
 
-                    const highConversionExamplesDiv = document.getElementById('highConversionExamples');
-                    if (Array.isArray(data.high_conversion_content_examples) && data.high_conversion_content_examples.length > 0) {
-                        highConversionExamplesDiv.innerHTML = '';
-                        data.high_conversion_content_examples.forEach(item => {
-                            const p = document.createElement('p');
-                            p.innerHTML = `<strong>内容:</strong> ${item.content || 'N/A'}<br>
-                                           <strong>情感:</strong> ${item.sentiment || 'N/A'}<br>
-                                           <strong>转化率:</strong> ${item.share_conversion_rate !== undefined ? (item.share_conversion_rate * 100).toFixed(2) + '%' : 'N/A'}`;
-                            p.style.marginBottom = '10px';
-                            p.style.paddingBottom = '5px';
-                            p.style.borderBottom = '1px dashed #eee';
-                            highConversionExamplesDiv.appendChild(p);
+                    wordCloudChart.setOption({
+                        tooltip: {
+                            formatter: function (params) {
+                                return `${params.name}: ${params.value}次`;
+                            }
+                        },
+                        series: [{
+                            type: 'wordCloud',
+                            gridSize: 10,
+                            sizeRange: [12, 60],
+                            rotationRange: [-45, 45],
+                            shape: 'pentagon',
+                            drawOutOfBound: false,
+                            textStyle: {
+                                normal: {
+                                    fontFamily: 'sans-serif',
+                                    fontWeight: 'bold',
+                                }
+                            },
+                            emphasis: {
+                                focus: 'self',
+                                textStyle: {
+                                    shadowBlur: 10,
+                                    shadowColor: '#333'
+                                }
+                            },
+                            data: wordCloudData
+                        }]
+                    });
+
+                    // --- 其他关键指标图表（柱状图：点赞/评论/分享百分位） ---
+                    const otherMetricsChartDom = document.getElementById('otherMetricsChart');
+                    if (otherMetricsChartInstance) { // 确保在重新初始化前销毁旧实例
+                        otherMetricsChartInstance.dispose();
+                    }
+                    if (otherMetricsChartDom) {
+                        otherMetricsChartInstance = echarts.init(otherMetricsChartDom);
+                        const percentileData = [
+                            { name: '点赞', value: data.interaction_percentiles.likes || 0 },
+                            { name: '评论', value: data.interaction_percentiles.comments || 0 },
+                            { name: '分享', value: data.interaction_percentiles.shares || 0 }
+                        ];
+                        otherMetricsChartInstance.setOption({
+                            tooltip: {
+                                trigger: 'axis',
+                                formatter: '{b}: {c} 百分位'
+                            },
+                            xAxis: {
+                                type: 'category',
+                                data: percentileData.map(item => item.name),
+                                name: '互动类型'
+                            },
+                            yAxis: {
+                                type: 'value',
+                                name: '百分位'
+                            },
+                            series: [{
+                                name: '百分位',
+                                type: 'bar',
+                                barWidth: '40%',
+                                data: percentileData.map(item => item.value),
+                                itemStyle: {
+                                    color: '#2A5CAA'
+                                }
+                            }]
                         });
                     } else {
-                        highConversionExamplesDiv.innerHTML = '<p>暂无高转化率内容示例。</p>';
+                        console.error("DOM 元素 'otherMetricsChart' 未找到，无法初始化其他关键指标图表。");
+                    }
+
+
+                    // --- 覆盖文字信息填充 ---
+                    document.getElementById('highLikesCount').textContent = data.extremely_high_likes_count !== undefined
+                        ? data.extremely_high_likes_count.toLocaleString()
+                        : 'N/A';
+                    document.getElementById('avgShareConversion').textContent = data.average_share_conversion_rate !== undefined
+                        ? (data.average_share_conversion_rate * 100).toFixed(2) + '%'
+                        : 'N/A';
+                    document.getElementById('eventStages').textContent = data.event_stages.stages_description || 'N/A';
+
+                    // --- 高转化率内容示例 ---
+                    const examples = data.high_conversion_content_examples || [];
+                    document.getElementById('exampleCount').textContent = examples.length;
+                    const highConversionExamplesDiv = document.getElementById('highConversionExamples');
+                    highConversionExamplesDiv.innerHTML = '';
+                    if (Array.isArray(examples) && examples.length > 0) {
+                        examples.forEach(item => {
+                            const card = document.createElement('div');
+                            card.className = 'example-card';
+                            card.innerHTML = `
+                                <p><strong>内容:</strong> ${item.content || 'N/A'}</p>
+                                <p><strong>情感:</strong> ${item.sentiment === 'positive' ? '积极' : (item.sentiment === 'negative' ? '消极' : '中性')}</p>
+                                <p><strong>转化率:</strong> ${item.share_conversion_rate !== undefined ? (item.share_conversion_rate * 100).toFixed(2) + '%' : 'N/A'}</p>
+                            `;
+                            highConversionExamplesDiv.appendChild(card);
+                        });
+                    } else {
+                        const noDataP = document.createElement('p');
+                        noDataP.textContent = '暂无高转化率内容示例。';
+                        highConversionExamplesDiv.appendChild(noDataP);
                     }
                 } catch (e) {
                     console.error("ECharts 初始化失败:", e);
                     displayError(`图表初始化失败: ${e.message}。请检查ECharts容器是否可见且有正确尺寸。`);
                 }
-            }, 0); // 关键：添加一个微小的延迟
+            }, 0); // 添加 0ms 延迟
         }
+
+        // 新增：用于更新中国地图图表数据的函数
+        function updateChinaMapChart() {
+            if (!chinaMapChart || !globalAnalysisData) {
+                console.warn('中国地图图表或数据未准备好，跳过更新。');
+                return;
+            }
+
+            const chinaMapData = globalAnalysisData.province_post_counts; // 从全局数据中获取地图数据
+
+            // 确保地图数据不为空，且有有效值，以便计算 max 值
+            const values = chinaMapData.map(item => item.value || 0);
+            const maxVal = values.length > 0 ? Math.max(...values) : 1;
+
+            chinaMapChart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}<br/>发帖量: {c}'
+                },
+                visualMap: {
+                    min: 0,
+                    max: maxVal,
+                    left: 'left',
+                    top: 'bottom',
+                    text: ['高', '低'],
+                    calculable: true,
+                    inRange: {
+                        color: ['#e0ffff', '#006edd']
+                    }
+                },
+                series: [
+                    {
+                        name: '发帖量',
+                        type: 'map',
+                        map: 'china',
+                        roam: false,
+                        label: {
+                            show: true,
+                            color: '#333',
+                            fontSize: 10
+                        },
+                        itemStyle: {
+                            areaColor: '#f3f3f3',
+                            borderColor: '#aaa'
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                color: '#fff'
+                            },
+                            itemStyle: {
+                                areaColor: '#2a5caa'
+                            }
+                        },
+                            data: chinaMapData
+                    }
+                ]
+            });
+        }
+
 
         // 数据获取和图表渲染的入口
         document.addEventListener('DOMContentLoaded', function() {
             fetch(FLASK_API_URL)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`HTTP 错误: ${response.status} ${response.statusText}. 可能是Flask应用未运行，或防火墙未开放。`);
+                        // 尝试读取响应文本以获取更详细的错误信息
+                        return response.text().then(text => {
+                            try {
+                                const jsonError = JSON.parse(text);
+                                throw new Error(`HTTP 错误: ${response.status} ${response.statusText}. ${jsonError.message || jsonError.error || '未知错误'}`);
+                            } catch (e) {
+                                throw new Error(`HTTP 错误: ${response.status} ${response.statusText}. 响应内容: ${text.substring(0, 200)}... 可能是Flask应用未运行，或防火墙未开放。`);
+                            }
+                        });
                     }
                     return response.json();
                 })
                 .then(data => {
                     console.log('成功从 Flask 获取到的数据:', data);
-                    initCharts(data); // 数据成功获取后才初始化并渲染图表
+                    globalAnalysisData = data; // 存储全局数据
+                    initOtherCharts(data); // 初始化除地图外的其他图表
+                    loadAndRegisterChinaMap(); // 异步加载并注册中国地图
                 })
                 .catch(error => {
-                    // 错误处理：在控制台打印错误，并在页面上显示错误信息
                     console.error('获取数据时发生错误:', error);
                     displayError(`加载数据失败: ${error.message}。请检查虚拟机IP、端口、Flask应用是否运行，以及HDFS文件是否存在且格式正确。`);
                 });
+
+            // 监听数据导出按钮点击事件
+            document.getElementById('exportDataButton').addEventListener('click', function() {
+                // 可以添加一个确认框或进度提示
+                if (!confirm('确定要导出数据吗？')) {
+                    return; // 用户取消则不执行
+                }
+
+                console.log('开始导出数据...');
+                // 直接通过创建一个隐藏的a标签并点击来触发文件下载
+                const a = document.createElement('a');
+                a.href = FLASK_EXPORT_API_URL; // 指向Flask的下载路由
+                a.download = 'exported_analysis_data.json'; // 建议下载的文件名
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a); // 移除a标签
+
+                alert('数据导出请求已发送，请检查您的下载。'); // 简单的提示
+            });
+
+
+
+            // 监听“生成报告”按钮点击事件
+            document.getElementById('generateReportButton').addEventListener('click', function() {
+                if (!confirm('确定要生成舆情分析报告并下载吗？报告生成可能需要一些时间。')) {
+                    return; // 用户取消则不执行
+                }
+
+                console.log('开始生成舆情分析报告...');
+                // 显示一个简单的加载提示
+                alert('报告生成中，请稍候... 文件将在生成完成后自动下载。');
+
+                fetch(FLASK_REPORT_API_URL, {
+                    method: 'POST', // Flask 接口定义为 POST 方法
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // 如果 report_with_deepseek 需要请求体，可以在这里添加 body
+                    body: JSON.stringify({})
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json') !== -1) {
+                            return response.json().then(errorData => {
+                                const errorMessage = errorData.message || errorData.error || '未知错误';
+                                throw new Error(`生成报告失败: ${response.status} ${response.statusText}. ${errorMessage}`);
+                            });
+                        } else{
+                            return response.text().then(text => {
+                                throw new Error(`生成报告失败: ${response.status} ${response.statusText}. 响应内容: ${text.substring(0, 200)}...`);
+                            });
+                        }
+                }
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let filename = `舆情分析报告_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.txt`; // 默认文件名，以防万一
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (match && match[1]) {
+                            try {
+                                filename = decodeURIComponent(match[1].replace(/['"]/g, ''));
+                            } catch (e) {
+                                console.warn('文件名解码失败:', e);
+                            }
+                        } else {
+                            const oldMatch = contentDisposition.match(/filename=([^;]*)/);
+                            if (oldMatch && oldMatch[1]) {
+                                filename = oldMatch[1];
+                                try {
+                                    filename = decodeURIComponent(filename);
+                                } catch (e) {
+                                    console.warn('文件名解码失败:', e);
+                                }
+                            }
+                        }
+                    }
+                    return response.blob().then(blob => ({ blob, filename }));
+                })
+                .then(({ blob, filename }) => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    console.log('文件下载已成功触发:', filename);
+                    alert('报告已生成并开始下载！'); // 提示用户下载已开始
+                })
+                .catch(error => {
+                    console.error('生成报告时发生错误:', error);
+                    alert(`生成报告失败: ${error.message}`);
+                });
+            });
         });
 
 
         // 监听窗口大小变化以调整 ECharts 图表大小
         window.addEventListener('resize', function() {
-            if (sentimentOverallChart) sentimentOverallChart.resize();
-            if (postsPerHourChart) postsPerHourChart.resize();
-            if (ipLocationCountsChart) ipLocationCountsChart.resize();
-            if (genderRatioChart) genderRatioChart.resize();
-            if (sharesByIpLocationChart) sharesByIpLocationChart.resize();
-            if (hotPostsSentimentChart) hotPostsSentimentChart.resize();
+            if (sentimentOverallChart && !sentimentOverallChart.isDisposed()) sentimentOverallChart.resize();
+            if (postsPerHourChart && !postsPerHourChart.isDisposed()) postsPerHourChart.resize();
+            if (ipLocationCountsChart && !ipLocationCountsChart.isDisposed()) ipLocationCountsChart.resize();
+            if (genderRatioChart && !genderRatioChart.isDisposed()) genderRatioChart.resize();
+            if (maleSentimentChart && !maleSentimentChart.isDisposed()) maleSentimentChart.resize();
+            if (femaleSentimentChart && !femaleSentimentChart.isDisposed()) femaleSentimentChart.resize();
+            if (sharesByIpLocationChart && !sharesByIpLocationChart.isDisposed()) sharesByIpLocationChart.resize();
+            if (hotPostsSentimentChart && !hotPostsSentimentChart.isDisposed()) hotPostsSentimentChart.resize();
+            if (wordCloudChart && !wordCloudChart.isDisposed()) wordCloudChart.resize();
+            if (chinaMapChart && !chinaMapChart.isDisposed()) chinaMapChart.resize();
+            if (otherMetricsChartInstance && !otherMetricsChartInstance.isDisposed()) otherMetricsChartInstance.resize();
         });
     </script>
 </body>

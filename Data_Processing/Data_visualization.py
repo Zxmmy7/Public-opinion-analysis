@@ -11,30 +11,36 @@ import jieba # 用于中文分词
 import builtins
 from py4j.java_gateway import JavaGateway # 导入JavaGateway，用于访问Java对象
 from pyspark import SparkContext
+from collections import Counter
 
-# ... (你现有的 PYSPARK_PYTHON 和 PYSPARK_DRIVER_PYTHON 设置不变)
+#步骤二
+
+
+
+
+# (现有的 PYSPARK_PYTHON 和 PYSPARK_DRIVER_PYTHON 设置不变)
 os.environ['PYSPARK_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'
 os.environ['PYSPARK_DRIVER_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'
 
-# 核心步骤：设置 SPARK_HOME 指向你虚拟机上 Spark 3.2.0 (scala2.13) 的安装路径
+# 核心步骤：设置 SPARK_HOME 指向 Spark 3.2.0 (scala2.13) 的安装路径
 os.environ['SPARK_HOME'] = '/Axiangmu/software/spark-3.2.0-bin-hadoop3.2-scala2.13'
 os.environ['PYSPARK_SUBMIT_ARGS'] = '--master spark://node01:7077 pyspark-shell'
 
 
 
 
-spark = (SparkSession.builder \
-    .appName("DataVisualization") \
-    .master("spark://node01:7077") \
-    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
-    .config("spark.hadoop.fs.defaultFS", "hdfs://node01:8020") \
+spark = (SparkSession.builder
+    .appName("DataVisualization")
+    .master("spark://node01:7077")
+    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    .config("spark.hadoop.fs.defaultFS", "hdfs://node01:8020")
     .getOrCreate())
 
 # 设置日志级别，减少不必要的输出
 spark.sparkContext.setLogLevel("WARN")
 
 # HDFS上的Parquet文件路径
-hdfs_input_path = "hdfs://node01:8020/user/spark/processed_data"
+hdfs_input_path = "hdfs://node01:8020/user/spark/Aprocessed_data"
 
 
 
@@ -43,7 +49,7 @@ hdfs_input_path = "hdfs://node01:8020/user/spark/processed_data"
 sc = SparkContext.getOrCreate()
 
 # 定义您的HDFS输出目录路径
-output_hdfs_path = "hdfs://node01:8020/user/spark/analysis_results_final"
+output_hdfs_path = "hdfs://node01:8020/user/spark/Banalysis_results_final"
 
 
 def delete_hdfs_path_recursively_if_exists(sc, path_to_delete):
@@ -82,7 +88,6 @@ delete_hdfs_path_recursively_if_exists(sc, output_hdfs_path)
 
 
 #程序正式开始
-
 try:
     df = spark.read.parquet(hdfs_input_path)
     print(f"Data loaded from {hdfs_input_path}. Schema:")
@@ -101,10 +106,10 @@ df = df.withColumnRenamed("内容", "content") \
     .withColumnRenamed("评论数", "comments") \
     .withColumnRenamed("分享数", "shares") \
     .withColumnRenamed("IP属地", "ip_location") \
-    .withColumnRenamed("性别", "gender")  # 你的数据没有“昵称”列，所以这里移除了
+    .withColumnRenamed("性别", "gender")
 
 # 数据类型转换，确保数值列为数值类型
-# created_at 列在你的Schema中已经是 string，我们假设它能被直接转换为 timestamp
+# created_at 列在Schema中已经是 string，我们假设它能被直接转换为 timestamp
 df = df.withColumn("likes", col("likes").cast(IntegerType())) \
     .withColumn("comments", col("comments").cast(IntegerType())) \
     .withColumn("shares", col("shares").cast(IntegerType()))
@@ -112,81 +117,93 @@ df = df.withColumn("likes", col("likes").cast(IntegerType())) \
 print("\nSchema after renaming and type casting:")
 df.printSchema()
 
-# --- 情感词典加载和处理 ---
-# 加载情感词典
-sentiment_words_path = "weibo_senti_100k.csv"  # 请确保这个文件存在于你的PySpark作业运行的机器上
 
+# === 三类情感判断 + 否定反转逻辑 === 加载情感词典
+sentiment_words_path = "weibo_senti_100k.csv"
 positive_words = set()
 negative_words = set()
 
 try:
     sentiment_df_pd = pd.read_csv(sentiment_words_path)
+    positive_counter = Counter()
+    negative_counter = Counter()
 
-    # 提取积极词汇 (label=1)
-    positive_reviews = sentiment_df_pd[sentiment_df_pd['label'] == 1]['review'].tolist()
-    for review in positive_reviews:
-        # 使用jieba进行分词，并添加到正面词典
-        positive_words.update(jieba.cut(str(review)))
+    for review in sentiment_df_pd[sentiment_df_pd['label'] == 1]['review']:
+        positive_counter.update(jieba.cut(str(review)))
+    for review in sentiment_df_pd[sentiment_df_pd['label'] == 0]['review']:
+        negative_counter.update(jieba.cut(str(review)))
 
-    # 提取消极词汇 (label=0)
-    negative_reviews = sentiment_df_pd[sentiment_df_pd['label'] == 0]['review'].tolist()
-    for review in negative_reviews:
-        # 使用jieba进行分词，并添加到负面词典
-        negative_words.update(jieba.cut(str(review)))
+    MIN_FREQ = 1
+    positive_words = set([word for word, count in positive_counter.items() if count >= MIN_FREQ])
+    negative_words = set([word for word, count in negative_counter.items() if count >= MIN_FREQ])
 
-    # 移除通用词或停用词，避免中性词进入情感词典
-    common_words = set(
-        ["的", "了", "是", "我", "你", "他", "她", "它", "我们", "你们", "他们", "和", "或", "但是", "所以", "都", "也",
-         "很", "非常", "不", "没有", "有", "个", "这", "那", "一个", "什么", "怎么", "哪里", "谁", "什么时候", "好",
-         "不好", "大", "小", "多", "少", "一点", "一些", "很多", "很少"])  # 示例停用词
-    positive_words = positive_words - common_words
-    negative_words = negative_words - common_words
+    common = positive_words & negative_words
+    positive_words -= common
+    negative_words -= common
 
-    # 避免词语同时出现在积极和消极词典中
-    common_in_senti = positive_words.intersection(negative_words)
-    positive_words = positive_words - common_in_senti
-    negative_words = negative_words - common_in_senti
-
-    print(
-        f"Loaded {len(positive_words)} positive words and {len(negative_words)} negative words from {sentiment_words_path}.")
-
+    print(f"词典加载成功：正向 {len(positive_words)} 个，负向 {len(negative_words)} 个")
 except Exception as e:
-    print(f"Error loading sentiment words from local file: {e}")
-    print("Please ensure 'weibo_senti_100k.csv' exists and is accessible. Using empty sentiment dictionaries.")
+    print(f"词典加载失败：{e}")
     positive_words = set()
     negative_words = set()
 
 
-# 定义情感分析UDF (User-Defined Function)
-def analyze_sentiment(text):
+# === 停用词定义与广播 ===
+common_words = {
+    "的", "了", "是", "我", "你", "他", "她", "它", "我们", "你们", "他们", "和", "或", "但是", "所以",
+    "都", "也", "很", "非常", "不", "没有", "有", "个", "这", "那", "一个", "什么", "怎么", "哪里",
+    "谁", "什么时候", "好", "不好", "大", "小", "多", "少", "一点", "一些", "很多", "很少",
+    "哈哈", "哈哈哈", "呵呵", "嗯", "啊", "哦", "啦", "呀", "吗", "呢", "吧", "嘛",
+    "就是", "然后", "还有", "这个", "那个", "那些", "这些", "什么样",
+    "可以", "要", "会", "能", "想", "觉得", "认为",
+    "几时", " ", "怎样", "为何",
+    "！", "，", "。", "？", "、", "；", "：", "“", "”", "（", "）", "【", "】", "<", ">", "/", "\\", "~", "`",
+    "@", "#", "$", "%", "^", "&", "*", "+", "=", "|", "{", "}", "[", "]", ":", ";", "'", "\"",
+    "\n", "\t",
+    "回复", "转发", "点赞", "评论", "分享",
+    "原创", "内容", "微博"
+}
+#广播
+broadcast_stopwords = spark.sparkContext.broadcast(common_words)
+
+
+def analyze_sentiment_v2(text):
     if text is None:
         return "neutral"
 
-    import jieba
+    words = list(jieba.cut(str(text).lower()))
+    negation_words = {"不", "没", "无", "未", "别", "莫", "从未", "不会"}
+    reverse = False
+    pos_score = 0
+    neg_score = 0
 
-    text_segmented = list(jieba.cut(str(text).lower()))
-    positive_count = 0
-    negative_count = 0
-
-    for word in text_segmented:
+    for word in words:
+        if word in negation_words:
+            reverse = True
+            continue
         if word in positive_words:
-            positive_count += 1
-        if word in negative_words:
-            negative_count += 1
+            if reverse:
+                neg_score += 1
+            else:
+                pos_score += 1
+        elif word in negative_words:
+            if reverse:
+                pos_score += 1
+            else:
+                neg_score += 1
+        reverse = False
 
-    if positive_count > negative_count:
+    if pos_score > neg_score:
         return "positive"
-    elif negative_count > positive_count:
+    elif neg_score > pos_score:
         return "negative"
     else:
         return "neutral"
 
-
-sentiment_udf = udf(analyze_sentiment, StringType())
-
-# 应用情感分析UDF
+sentiment_udf = udf(analyze_sentiment_v2, StringType())
 df = df.withColumn("sentiment", sentiment_udf(col("content")))
-df.cache()  # 缓存DataFrame，因为后续会多次使用
+df.cache()
+  # 缓存DataFrame，因为后续会多次使用
 print("\nDataFrame with sentiment column:")
 df.show(5)
 
@@ -361,7 +378,7 @@ if not posts_per_day_pandas.empty:
     event_stages = {
         "peak_date": peak_date,
         "peak_count": peak_count,
-        "stages_description": "此为简化识别，真实事件阶段标记需更复杂的算法。通常引发期是发帖量开始增长的时期，高潮期是发帖量达到峰值的时期，平息期是发帖量开始下降的时期。"
+        "stages_description": "通常引发期是发帖量开始增长的时期，高潮期是发帖量达到峰值的时期，平息期是发帖量开始下降的时期。"
     }
 else:
     event_stages = {"stages_description": "No data for event stage analysis."}
@@ -394,11 +411,6 @@ results["gender_ratio"] = gender_ratio
 print(f"Gender Ratio: {gender_ratio}")
 
 # 平均发帖量 (需要先统计每个用户的发帖量)
-# 由于你的数据没有昵称（nickname）列，这里需要修正，我们将跳过此项或假定某种用户ID
-# 鉴于你只提供了性别，我们将按性别统计发帖量
-# 如果你实际有用户ID，请将其作为group by的依据
-# 这里为了能运行，我们跳过按nickname统计发帖量，因为它不存在
-# 如果你需要计算平均发帖量，需要有用户ID来区分不同的用户
 results["avg_posts_per_gender"] = "Analysis skipped due to missing 'nickname' column for user-specific post count."
 print(results["avg_posts_per_gender"])
 
@@ -462,12 +474,6 @@ print(json.dumps(shares_by_ip_data, indent=2, ensure_ascii=False))
 # 9. 计算分享转化率（分享数/总互动量），分析高转化率内容的语义特征
 print("\n--- 9. 分享转化率及高转化率内容语义特征 ---")
 
-# Ensure 'likes', 'comments', 'shares' columns are numeric.
-# If they might be strings in your actual data, uncomment and adjust these lines:
-# from pyspark.sql.types import IntegerType # Or LongType, DoubleType
-# df = df.withColumn("likes", col("likes").cast(IntegerType()))
-# df = df.withColumn("comments", col("comments").cast(IntegerType()))
-# df = df.withColumn("shares", col("shares").cast(IntegerType()))
 
 df_with_total_interaction = df.withColumn("total_interaction", col("likes") + col("comments") + col("shares"))
 
@@ -477,16 +483,10 @@ df_with_conversion_rate = df_with_total_interaction.withColumn(
     when(col("total_interaction") > 0, col("shares") / col("total_interaction")).otherwise(0.0)
 )
 
-# Filter out rows where total_interaction is not positive if desired,
-# though 'when' clause above already handles the 0 case.
-# df_with_conversion_rate = df_with_conversion_rate.filter(col("total_interaction") > 0)
-
 
 avg_conversion_rate = df_with_conversion_rate.agg(avg("share_conversion_rate").alias("average_rate")).collect()[0][
     "average_rate"]
 
-# The fix: Explicitly call Python's built-in round.
-# If there's a conflict, you can be super explicit by using __builtins__.round
 results["average_share_conversion_rate"] = __builtins__.round(avg_conversion_rate, 4)
 print(f"Average Share Conversion Rate: {results['average_share_conversion_rate']}")
 
@@ -521,7 +521,7 @@ print("Sentiment per IP Location:")
 print(json.dumps(sentiment_ip_data, indent=2, ensure_ascii=False))
 
 # 11. 基于历史数据训练回归模型，预测未来24小时的内容互动量趋势
-print("\n--- 11. 内容互动量趋势预测 (概念性) ---")
+print("\n--- 11. 内容互动量趋势预测  ---")
 results[
     "interaction_prediction_model"] = "This is a placeholder. Implementing a regression model for interaction prediction requires: 1. Feature Engineering (time, content features). 2. Model Selection (e.g., ARIMA, Prophet, or Supervised Learning with time-based features). 3. Model Training, Evaluation, and Prediction. This goes beyond basic Spark SQL analysis."
 print(results["interaction_prediction_model"])
@@ -566,24 +566,28 @@ print(json.dumps(sentiment_time_data_echarts, indent=2, ensure_ascii=False))
 
 # 13. 分析频繁被使用的词组，将它们分为正面和负面
 print("\n--- 13. 频繁词组分析 ---")
-# 定义分词UDF
-def segment_text_udf(text):
+# 定义分词UDF，现在在分词后直接过滤停用词
+def segment_text_and_filter_stopwords_udf(text):
     if text is None:
         return []
     import jieba
-    return list(jieba.cut(str(text)))
+    # 获取广播变量中的停用词集合
+    stopwords = broadcast_stopwords.value # 获取广播变量的值
+    segmented_words = [word for word in jieba.cut(str(text)) if word not in stopwords and len(word.strip()) > 0] # 过滤停用词和空字符串
+    return segmented_words
 
+# 使用新的UDF
+segment_udf_filtered = udf(segment_text_and_filter_stopwords_udf, ArrayType(StringType()))
 
-segment_udf = udf(segment_text_udf, ArrayType(StringType()))
+# 应用分词UDF并炸开词语，现在已经过滤了停用词
+df_words = df.withColumn("word", explode(segment_udf_filtered(col("content"))))
 
-# 应用分词UDF并炸开词语
-df_words = df.withColumn("word", explode(segment_udf(col("content"))))
-
-# 过滤空词语，并统计词频
+# 过滤空词语（如果分词器产生，虽然上面已经处理了），并统计词频
+# 这里的filter(col("word") != "") 可以保留，作为双重保险，但主要过滤工作已经在UDF中完成
 word_counts = df_words.filter(col("word") != "").groupBy("word").count().orderBy(desc("count")).limit(50)
 frequent_words = word_counts.collect()
 
-# 结合情感词典对高频词进行情感分类
+# 结合情感词典对高频词进行情感分类 (这部分不变，因为词云图的词已经干净了)
 frequent_words_sentiment = []
 for row in frequent_words:
     word = row["word"]
@@ -599,16 +603,64 @@ results["frequent_words_sentiment"] = frequent_words_sentiment
 print("Frequent Words with Sentiment:")
 print(json.dumps(frequent_words_sentiment, indent=2, ensure_ascii=False))
 
-# 6. (原问题中重复的6) 按用户总互动量（点赞+评论+分享）筛选Top 100意见领袖
-# 鉴于你的数据中没有“昵称”列，这里无法按昵称筛选。
-# 如果你有一个唯一的用户ID列，可以替换“nickname”。
-# 如果没有唯一用户ID，此分析项无法实现，或者只能通过某种聚合代理
+# 146. 按用户总互动量（点赞+评论+分享）筛选Top 100意见领袖
 results[
     "top_100_opinion_leaders"] = "Analysis skipped due to missing 'nickname' or other unique user identifier column."
 print(results["top_100_opinion_leaders"])
 
+
+
+# IP 归属地发帖量分布
+print("\n--- 3. IP 归属地发帖量分布 ---")
+# DataFrame
+ip_location_counts_df = df.groupBy("ip_location").count().orderBy(desc("count"))
+ip_location_counts_collected = ip_location_counts_df.collect()
+
+ip_location_x_data = [row["ip_location"] for row in ip_location_counts_collected]
+ip_location_series_data = [row["count"] for row in ip_location_counts_collected]
+
+results["ip_location_counts"] = {
+    "series_name": "IP 归属地发帖量",
+    "x_data": ip_location_x_data,
+    "series_data": ip_location_series_data
+}
+print("IP Location Counts:")
+print(json.dumps(results["ip_location_counts"], indent=2, ensure_ascii=False))
+
+# -----------------------------------------------------------------------
+# 新增部分：为中国地图热度图准备数据
+# -----------------------------------------------------------------------
+print("\n--- 为中国地图热度图准备数据 ---")
+
+province_data_for_map = []
+# 直接使用前面已经收集到的 ip_location_counts 数据
+for i in range(len(ip_location_x_data)):
+    location_name = ip_location_x_data[i]
+    post_count = ip_location_series_data[i]
+
+    # 需要处理港澳台
+    standard_province_name = location_name
+    if location_name == "中国台湾":
+        standard_province_name = "台湾"
+    elif location_name == "中国澳门":
+        standard_province_name = "澳门"
+    elif location_name == "中国香港":
+        standard_province_name = "香港"
+    # 其他省份已经是 ECharts 地图能够识别的标准名称
+
+    province_data_for_map.append({
+        "name": standard_province_name,
+        "value": post_count
+    })
+
+results["province_post_counts"] = province_data_for_map
+print("Province Post Counts for Map:")
+print(json.dumps(province_data_for_map, indent=2, ensure_ascii=False))
+
+
+
 # 最终将所有结果写入HDFS
-output_hdfs_path = "hdfs://node01:8020/user/spark/analysis_results_final"
+output_hdfs_path = "hdfs://node01:8020/user/spark/Banalysis_results_final"
 try:
     json_output_string = json.dumps(results, indent=2, ensure_ascii=False)
 
@@ -620,5 +672,9 @@ try:
 except Exception as e:
     print(f"Error saving results to HDFS: {e}")
 
+
+
 spark.stop()
 print("SparkSession stopped.")
+
+

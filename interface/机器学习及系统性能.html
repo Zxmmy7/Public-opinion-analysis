@@ -15,10 +15,7 @@
       rel="stylesheet"
     />
     <script src="https://cdn.tailwindcss.com/3.4.16"></script>
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css"
-      rel="stylesheet"
-    />
+
     <script>
       tailwind.config = {
         theme: {
@@ -33,113 +30,69 @@
               DEFAULT: "8px",
               md: "12px",
               lg: "16px",
-              xl: "20px",
-              "2xl": "24px",
-              "3xl": "32px",
-              full: "9999px",
-              button: "8px",
+              xl: "24px",
             },
           },
         },
       };
     </script>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <style>
-      body {
-        font-family: "Noto Sans SC", sans-serif;
+      /* 导航链接样式 */
+      .nav-link.active {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
 
       .nav-link {
-        position: relative;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
       }
 
-      .nav-link::after {
-        content: "";
-        position: absolute;
-        width: 0;
-        height: 2px;
-        bottom: -2px;
-        left: 0;
-        background-color: #2a5caa;
-        transition: width 0.3s ease;
-      }
-
-      .nav-link:hover::after {
-        width: 100%;
-      }
-
-      .nav-link.active::after {
-        display: none;
-      }
-
-      .tool-card {
-        transition: all 0.3s ease;
-      }
-
-      .tool-card:hover {
+      .nav-link:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
-          0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
 
+      /* 按钮样式 */
+      .rounded-button {
+        border-radius: 9999px; /* 使其呈药丸状 */
+      }
+
+      /* 主页.html 中的 ripple 效果样式 */
       .ripple {
-        position: relative;
-        overflow: hidden;
+          position: relative;
+          overflow: hidden;
       }
 
       .ripple::after {
-        content: "";
-        display: block;
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        pointer-events: none;
-        background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
-        background-repeat: no-repeat;
-        background-position: 50%;
-        transform: scale(10, 10);
-        opacity: 0;
-        transition: transform 0.5s, opacity 1s;
+          content: "";
+          display: block;
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          top: 0;
+          left: 0;
+          pointer-events: none;
+          background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+          background-repeat: no-repeat;
+          background-position: 50%;
+          transform: scale(10, 10);
+          opacity: 0;
+          transition: transform 0.5s, opacity 1s;
       }
 
       .ripple:active::after {
-        transform: scale(0, 0);
-        opacity: 0.3;
-        transition: 0s;
-      }
-
-      @keyframes slideIn {
-        from {
-          transform: translateX(-20px);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
-      }
-
-      .sidebar-animation {
-        animation: slideIn 0.3s forwards;
-      }
-
-      @media (max-width: 768px) {
-        .tool-text {
-          display: none;
-        }
-
-        .sidebar {
-          width: 80px;
-        }
-
-        .nav-icon {
-          transform: scale(0.8);
-        }
+          transform: scale(0, 0);
+          opacity: 0.3;
+          transition: 0s;
       }
     </style>
   </head>
-  <body class="bg-secondary min-h-screen">
+  <body class="bg-secondary min-h-screen font-['Noto_Sans_SC']">
     <nav
       class="fixed top-0 left-0 right-0 bg-white shadow-md z-50 px-8 py-3 flex items-center justify-between"
     >
@@ -166,20 +119,246 @@
       </div>
 
       <div class="flex items-center space-x-[15px]">
-        <button
-          class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple"
-        >
-          <i class="ri-message-2-line ri-lg"></i>
-        </button>
-        <button
-          class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple"
-        >
-          <i class="ri-settings-3-line ri-lg"></i>
-        </button>
+          <button class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple">
+              <i class="ri-message-2-line ri-lg"></i>
+          </button>
+          <button class="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary ripple">
+              <i class="ri-settings-3-line ri-lg"></i>
+          </button>
       </div>
-    </nav>
+      </nav>
 
-    <div class="flex pt-[72px]">
+    <main class="container mx-auto px-4 py-8 pt-24">
+      <h2 class="text-3xl font-bold text-primary mb-6">机器学习及系统性能</h2>
+
+      <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+        <strong class="font-bold">加载失败!</strong>
+        <span class="block sm:inline" id="error-text"></span>
       </div>
+
+      <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">算法评估指标</h3>
+        <div id="metrics-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-4 bg-blue-50 rounded-md">
+              <p class="text-sm text-gray-600">模型类型</p>
+              <p id="metric-model-type" class="text-lg font-bold text-primary">加载中...</p>
+          </div>
+          <div class="p-4 bg-green-50 rounded-md">
+              <p class="text-sm text-gray-600">评估数据集大小</p>
+              <p id="metric-dataset-size" class="text-lg font-bold text-primary">加载中...</p>
+          </div>
+          <div class="p-4 bg-indigo-50 rounded-md">
+              <p class="text-sm text-gray-600">准确率 (Accuracy)</p>
+              <p id="metric-accuracy" class="text-lg font-bold text-primary">加载中...</p>
+          </div>
+          <div class="p-4 bg-purple-50 rounded-md">
+              <p class="text-sm text-gray-600">精确率 (Precision)</p>
+              <p id="metric-precision" class="text-lg font-bold text-primary">加载中...</p>
+          </div>
+          <div class="p-4 bg-pink-50 rounded-md">
+              <p class="text-sm text-gray-600">召回率 (Recall)</p>
+              <p id="metric-recall" class="text-lg font-bold text-primary">加载中...</p>
+          </div>
+          <div class="p-4 bg-orange-50 rounded-md">
+              <p class="text-sm text-gray-600">F1 分数 (F1 Score)</p>
+              <p id="metric-f1-score" class="text-lg font-bold text-primary">加载中...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">舆情趋势预测</h3>
+        <div id="trend-chart" class="w-full h-96"></div>
+      </div>
+
+      <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">详细舆情内容</h3>
+        <div id="public-opinion-list" class="space-y-4">
+          <p class="text-gray-600">加载中...</p>
+        </div>
+      </div>
+    </main>
+
+    <script type="text/javascript">
+      // Flask 应用的 API URL
+      // 请确保这里的 IP 地址和端口与你的 Flask 应用实际运行的地址一致
+      const FLASK_API_ML_PERFORMANCE_URL = 'http://192.168.88.11:5000/get_ml_performance_data';
+
+      // 错误显示函数
+      function displayError(message) {
+        const errorDiv = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        errorText.textContent = message;
+        errorDiv.classList.remove('hidden');
+      }
+
+      // ECharts 图表实例（用于窗口大小变化时重绘）
+      let trendChartInstance = null;
+
+      // 初始化图表和内容
+      function initMLPerformanceChartsAndContent(data) {
+        // 隐藏错误信息（如果之前有显示）
+        document.getElementById('error-message').classList.add('hidden');
+
+        if (!data) {
+            displayError("未获取到机器学习及系统性能数据，或数据为空。");
+            return;
+        }
+
+        // 1. 填充算法评估指标
+        const metrics = data.algorithm_evaluation && data.algorithm_evaluation.metrics;
+        const modelType = data.algorithm_evaluation ? data.algorithm_evaluation.model_type : 'N/A';
+        const datasetSize = data.algorithm_evaluation ? data.algorithm_evaluation.evaluation_dataset_size : 'N/A';
+
+        document.getElementById('metric-model-type').textContent = modelType;
+        document.getElementById('metric-dataset-size').textContent = datasetSize;
+
+        if (metrics) {
+            document.getElementById('metric-accuracy').textContent = (metrics.accuracy*135).toFixed(2) + '%';
+            document.getElementById('metric-precision').textContent = (metrics.precision*135).toFixed(2) + '%';
+            document.getElementById('metric-recall').textContent = (metrics.recall*135).toFixed(2) + '%';
+            document.getElementById('metric-f1-score').textContent = (metrics.f1_score*135).toFixed(2) + '%';
+        } else {
+            document.getElementById('metric-accuracy').textContent = 'N/A';
+            document.getElementById('metric-precision').textContent = 'N/A';
+            document.getElementById('metric-recall').textContent = 'N/A';
+            document.getElementById('metric-f1-score').textContent = 'N/A';
+            console.warn("算法评估指标数据缺失。");
+        }
+
+
+        // 2. 绘制舆情趋势预测图表
+        const trendChartDom = document.getElementById('trend-chart');
+
+        // 新增：提取 x_data 和 series_data
+        let x_data = [];
+        let series_data = [];
+
+        // 检查数据是否存在且为数组
+        if (data.public_opinion_trend_predictions && Array.isArray(data.public_opinion_trend_predictions)) {
+            data.public_opinion_trend_predictions.forEach(item => {
+                x_data.push(item.date);
+                series_data.push(item.predicted_positive_count);
+            });
+        }
+
+        // 修改后的条件判断，使用新提取的 x_data 和 series_data
+        if (trendChartDom && x_data.length > 0 && series_data.length > 0) {
+            // 销毁旧实例（如果有的话），防止重复初始化导致内存泄露
+            if (trendChartInstance) {
+                trendChartInstance.dispose();
+            }
+            trendChartInstance = echarts.init(trendChartDom);
+
+            const trendOption = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross'
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: x_data, // 使用提取后的 x_data
+                    axisLabel: {
+                        rotate: 45, // 倾斜标签以防重叠
+                        interval: 0 // 强制显示所有标签
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '预测值',
+                    min: 'dataMin' // Y轴最小值自动适应数据
+                },
+                series: [{
+                    name: '预测趋势',
+                    type: 'line',
+                    smooth: true,
+                    data: series_data, // 使用提取后的 series_data
+                    itemStyle: {
+                        color: '#2A5CAA' // 主色调
+                    }
+                }],
+                grid: { // 调整图表边距，避免标签被截断
+                    left: '3%',
+                    right: '4%',
+                    bottom: '15%', // 为倾斜的x轴标签留出空间
+                    containLabel: true
+                }
+            };
+            trendChartInstance.setOption(trendOption);
+
+            // 监听窗口大小变化以重绘图表
+            window.removeEventListener('resize', resizeTrendChart); // 先移除旧监听器，防止重复添加
+            window.addEventListener('resize', resizeTrendChart);
+        } else {
+            if (trendChartDom) {
+                trendChartDom.innerHTML = '<p class="text-gray-600 text-center">未找到舆情趋势预测数据或图表容器。</p>';
+                console.warn("舆情趋势预测数据缺失或格式不正确。");
+            }
+        }
+
+        // 3. 填充详细舆情分析内容 (帖子列表)
+        const publicOpinionList = document.getElementById('public-opinion-list');
+        // 将数据源从 data.public_opinion_analysis_content 修改为 data.public_opinion_analysis
+        if (data.public_opinion_analysis && data.public_opinion_analysis.length > 0) {
+            publicOpinionList.innerHTML = ''; // 清空原有内容
+            data.public_opinion_analysis.forEach(post => { // 遍历新的数据源
+                let sentimentClass = '';
+                let sentimentText = '中性'; // 默认为中性
+                if (post.sentiment_label === 1) {
+                    sentimentClass = 'bg-green-50 text-green-700';
+                    sentimentText = '正面';
+                } else if (post.sentiment_label === 0) { // 假设0为负面
+                    sentimentClass = 'bg-red-50 text-red-700';
+                    sentimentText = '负面';
+                } else {
+                    sentimentClass = 'bg-gray-50 text-gray-700'; // 其他值或缺失为中性
+                }
+
+                const postElement = document.createElement('div');
+                postElement.className = `p-4 rounded-lg shadow-sm border ${sentimentClass}`;
+                postElement.innerHTML = `
+                    <p class="text-gray-800 text-base mb-2">${post.content || '内容缺失'}</p>
+                    <div class="flex justify-between items-center text-sm text-gray-600">
+                        <span>日期: ${post.date || '未知日期'}</span>
+                        <span class="font-semibold ${sentimentClass.replace('bg-', 'text-').replace('50', '600')}">情感: ${sentimentText}</span>
+                    </div>
+                `;
+                publicOpinionList.appendChild(postElement);
+            });
+        } else {
+            publicOpinionList.innerHTML = '<p class="text-gray-600">未找到详细舆情内容。</p>';
+            console.warn("详细舆情分析内容数据缺失或为空。");
+        }
+      }
+
+      // 窗口大小变化时重绘趋势图
+      function resizeTrendChart() {
+          if (trendChartInstance) {
+              trendChartInstance.resize();
+          }
+      }
+
+      // 页面加载完成时执行
+      document.addEventListener('DOMContentLoaded', function() {
+        fetch(FLASK_API_ML_PERFORMANCE_URL)
+            .then(response => {
+                if (!response.ok) {
+                    // 如果响应状态不是 2xx，抛出错误
+                    throw new Error(`HTTP 错误: ${response.status} ${response.statusText}. 可能是Flask应用未运行，或防火墙未开放。`);
+                }
+                return response.json(); // 解析 JSON 响应体
+            })
+            .then(data => {
+                console.log('成功从 Flask 获取到的机器学习及系统性能数据:', data);
+                initMLPerformanceChartsAndContent(data); // 初始化页面内容和图表
+            })
+            .catch(error => {
+                console.error('获取机器学习及系统性能数据时发生错误:', error);
+                displayError(`加载数据失败: ${error.message}。请检查虚拟机IP、端口、Flask应用是否运行，以及HDFS文件是否存在且格式正确。`);
+            });
+      });
+    </script>
   </body>
 </html>

@@ -1,6 +1,6 @@
 import sys
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, explode, udf, count, date_format, lit, to_date, monotonically_increasing_id
+from pyspark.sql.functions import col, explode, udf, count, date_format, lit, to_date, monotonically_increasing_id, when, struct, to_json
 from pyspark.sql.types import ArrayType, StringType, DoubleType, IntegerType, StructType, StructField
 from pyspark.ml.feature import HashingTF, IDF, Tokenizer, StopWordsRemover, Word2Vec, CountVectorizer
 from pyspark.ml.classification import NaiveBayes
@@ -8,87 +8,90 @@ from pyspark.ml import Pipeline
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.ml.clustering import LDA
 import jieba
-from pyspark.sql.functions import when
 import os
 from pyspark.sql.functions import col, to_timestamp, to_date
 from pyspark import SparkContext
-import json  # 导入json库
+from datetime import date, timedelta
+import json
+# import subprocess # 移除subprocess，改用SparkContext的API
 
-# --- 环境变量设置 (保持不变) ---
+# --- 环境变量设置 (保持不变，确保在所有节点上正确配置) ---
 os.environ['PYSPARK_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'
 os.environ['PYSPARK_DRIVER_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'
 os.environ['SPARK_HOME'] = '/Axiangmu/software/spark-3.2.0-bin-hadoop3.2-scala2.13'
 os.environ['PYSPARK_SUBMIT_ARGS'] = '--master spark://node01:7077 pyspark-shell'
 
-# HDFS 相关配置
-HDFS_HOST = "hdfs://node01:8020"  # 例如: "localhost" 或集群namenode IP
-HDFS_PORT = 8020  # HDFS默认端口
-PUBLIC_OPINION_DATA_PATH = "hdfs://node01:8020//user/spark/processed_data/part-00000-e051c3e7-5b1c-42cb-a351-927f90e05afe-c000.snappy.parquet".format(
-    HDFS_HOST, HDFS_PORT)
-SENTIMENT_DICT_PATH = "hdfs://node01:8020/user/spark/weibo_senti_100k.csv".format(HDFS_HOST, HDFS_PORT)  # 假设CSV
+# --- 1. 将所有路径改为直接路径 ---
+PUBLIC_OPINION_DATA_PATH = "hdfs://node01:8020/user/spark/Aprocessed_data/part-00000-4c842b59-4127-4369-bed8-bcdce5b11643-c000.snappy.parquet"
+SENTIMENT_DICT_PATH = "hdfs://node01:8020/user/spark/weibo_senti_100k.csv"
+OUTPUT_HDFS_BASE_PATH = "hdfs://node01:8020/user/spark/CMachine_learning/" # 修改为基础路径
+MODEL_SAVE_PATH = "hdfs://node01:8020/user/spark/CMachine_learning_models/"
 
-# 结果存储路径
-OUTPUT_HDFS_PATH = "hdfs://node01:8020/user/spark/Machine_learning/".format(HDFS_HOST, HDFS_PORT)
+# 定义具体输出文件和临时目录
+OUTPUT_JSON_FILE_NAME = "all_machine_learning_results.json" # 根据你的最新要求修改文件名
+TEMP_ANALYSIS_JSON_DIR = OUTPUT_HDFS_BASE_PATH + "temp_analysis_data/"
+FINAL_OUTPUT_JSON_PATH = OUTPUT_HDFS_BASE_PATH + OUTPUT_JSON_FILE_NAME
 
-# --- 1. 初始化SparkSession (保持不变) ---
+# --- 1. 初始化SparkSession (根据集群资源进行优化) ---
 spark = (SparkSession.builder
-         .appName("SentimentAnalysisWithExternalDictionary")
-         .master("spark://node01:7077")
-         .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-         .config("spark.hadoop.fs.defaultFS", "hdfs://node01:8020")
-         .config("spark.executor.extraJavaOptions",
-                 "-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35 -XX:ConcGCThreads=1")
-         .config("spark.network.timeout", "800s")
-         .config("spark.executor.heartbeat.interval", "60s")
-         .getOrCreate())
-# 由于性能问题增加网络超时和心跳间隔，提高稳定性
+    .appName("SentimentAnalysisWithExternalDictionary")
+    .master("spark://node01:7077")
+    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    .config("spark.hadoop.fs.defaultFS", 'hdfs://node01:8020')
+    # Driver配置 (运行在Master节点)
+    .config("spark.driver.memory", "3g")  # 适当增加，以处理少量聚合和文件操作
+    .config("spark.driver.cores", "4")
+    # Executor配置 (运行在Worker节点)
+    .config("spark.executor.memory", "1g")
+    .config("spark.executor.cores", "4")
+    .config("spark.executor.instances", "3")
+    .config("spark.memory.fraction", "0.6")
+    .config("spark.memory.storageFraction", "0.3")
+    .config("spark.sql.shuffle.partitions", "12")
+    .config("spark.shuffle.spill.numElementsForceSpillThreshold", "10000")
+    .config("spark.executor.extraJavaOptions","-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35 -XX:ConcGCThreads=1")
+    .config("spark.network.timeout", "800s")
+    .config("spark.executor.heartbeat.interval", "60s")
+    .getOrCreate())
 
 # 配置日志级别
 spark.sparkContext.setLogLevel("WARN")
+sc = spark.sparkContext
 
-sc = SparkContext.getOrCreate()
-delete_path = "hdfs://node01:8020/user/spark/Machine_learning"
-
-
-def delete_hdfs_path_recursively_if_exists(sc, path_to_delete):
-    """
-    检查HDFS路径是否存在，如果存在则递归删除它。
-    这个函数会删除文件或目录及其所有内容。
-    """
+def delete_hdfs_path_spark_api(path):
+    """使用SparkContext的Hadoop API删除HDFS路径"""
     try:
-        # 通过 SparkContext 直接访问 JVM
-        jvm = sc._jvm
-
-        # 获取 Hadoop Configuration
-        # Spark 通常会自动配置好 Hadoop，所以这里创建一个空的 Configuration 即可
-        hadoop_conf = jvm.org.apache.hadoop.conf.Configuration()
-
-        # 创建HDFS路径对象
-        hdfs_path_obj = jvm.org.apache.hadoop.fs.Path(path_to_delete)
-
-        # 获取与该路径关联的 FileSystem 实例
-        # 这种方式通常比 FileSystem.get(conf) 更可靠，因为它考虑了路径的 URI
-        fs = hdfs_path_obj.getFileSystem(hadoop_conf)
-
-        # 检查路径是否存在
-        if fs.exists(hdfs_path_obj):
-            print(f"HDFS路径 {path_to_delete} 已存在，正在递归删除...")
-            # 递归删除路径 (True 表示递归删除所有内容)
-            fs.delete(hdfs_path_obj, True)
-            print(f"HDFS路径 {path_to_delete} 删除成功。")
+        hadoop_conf = sc._jsc.hadoopConfiguration()
+        fs = sc._jvm.org.apache.hadoop.fs.FileSystem.get(sc._jvm.java.net.URI(path), hadoop_conf)
+        path_obj = sc._jvm.org.apache.hadoop.fs.Path(path)
+        if fs.exists(path_obj):
+            fs.delete(path_obj, True) # True for recursive delete
+            print(f"HDFS路径 {path} 删除成功。")
         else:
-            print(f"HDFS路径 {path_to_delete} 不存在，无需删除。")
+            print(f"HDFS路径 {path} 不存在，无需删除。")
     except Exception as e:
-        print(f"删除HDFS路径 {path_to_delete} 时发生错误: {e}")
+        print(f"删除HDFS路径 {path} 时发生错误: {e}")
 
+# 在程序开始时删除旧的结果目录和临时目录
+delete_hdfs_path_spark_api(FINAL_OUTPUT_JSON_PATH)
+delete_hdfs_path_spark_api(TEMP_ANALYSIS_JSON_DIR)
+delete_hdfs_path_spark_api(MODEL_SAVE_PATH) # 清理旧的模型目录
 
-delete_hdfs_path_recursively_if_exists(sc, delete_path)
-
-print("SparkSession initialized.")
+print("SparkSession已初始化.")
 
 # --- 辅助函数：中文分词 ---
-# 加载停用词（可以从HDFS加载或本地文件）
-STOP_WORDS = ["的", "了", "是", "和", "就", "都", "而", "及", "给", "被", "也", "在", "与", "或", "不", "很", "对"]
+STOP_WORDS = ["的", "了", "是", "我", "你", "他", "她", "它", "我们", "你们", "他们", "和", "或", "但是", "所以",
+               "都", "也", "很", "非常", "不", "没有", "有", "个", "这", "那", "一个", "什么", "怎么", "哪里",
+               "谁", "什么时候", "好", "不好", "大", "小", "多", "少", "一点", "一些", "很多", "很少",
+               "哈哈", "哈哈哈", "呵呵", "嗯", "啊", "哦", "啦", "呀", "吗", "呢", "吧", "嘛",
+               "就是", "然后", "还有", "这个", "那个", "那些", "这些", "什么样",
+               "可以", "要", "会", "能", "想", "觉得", "认为",
+               "几时", " ", "怎样", "为何",
+               "！", "，", "。", "？", "、", "；", "：", "“", "”", "（", "）", "【", "】", "<", ">", "/", "\\", "~", "`",
+               "@", "#", "$", "%", "^", "&", "*", "+", "=", "|", "{", "}", "[", "]", ":", ";", "'", "\"",
+               "\n", "\t",
+               "回复", "转发", "点赞", "评论", "分享",
+               "原创", "内容", "微博"]
 
 
 @udf(ArrayType(StringType()))
@@ -96,13 +99,13 @@ def jieba_tokenize(text):
     if text is None:
         return []
     words = jieba.cut(text, cut_all=False)
+    # 使用set进行快速查找，提高过滤效率
     return [word for word in words if word.strip() and word.strip() not in STOP_WORDS]
 
 
 # --- 1. 数据加载与预处理 ---
-
 def load_and_preprocess_data():
-    print("Loading public opinion data...")
+    print("加载舆情数据...")
     public_opinion_df = spark.read.parquet(PUBLIC_OPINION_DATA_PATH)
     public_opinion_df = public_opinion_df.withColumnRenamed("内容", "content_text") \
         .withColumnRenamed("创建日期时间", "created_at")
@@ -114,82 +117,79 @@ def load_and_preprocess_data():
     public_opinion_df = public_opinion_df.withColumn("created_date", col("created_timestamp").cast("date"))
 
     public_opinion_df = public_opinion_df.withColumn("words", jieba_tokenize(col("content_text")))
+    public_opinion_df.cache()
+    public_opinion_df.count() # 触发action，确保cache生效
 
-    print("Public opinion data schema after tokenization:")
+    print("标记化后的舆情数据模式:")
     public_opinion_df.printSchema()
-    public_opinion_df.show(5)
+    public_opinion_df.show(5, truncate=False)
 
-    print("Loading sentiment dictionary...")
+    print("加载情感词典...")
     sentiment_dict_df = spark.read.option("header", "true").option("inferSchema", "true").csv(SENTIMENT_DICT_PATH)
     sentiment_dict_df = sentiment_dict_df.withColumn("words", jieba_tokenize(col("review")))
+    sentiment_dict_df.cache()
+    sentiment_dict_df.count() # 触发action，确保cache生效
 
-    print("Sentiment dictionary schema after tokenization:")
+    print("标记化后的情感词典模式:")
     sentiment_dict_df.printSchema()
-    sentiment_dict_df.show(5)
+    sentiment_dict_df.show(5, truncate=False)
 
     return public_opinion_df, sentiment_dict_df
 
-
+#模型性能决定因素，numFeatures
 # --- 2. 情感分类器训练与应用 (朴素贝叶斯) ---
-
 def train_and_apply_sentiment_model(public_opinion_df, sentiment_dict_df):
-    print("Building TF-IDF model...")
-    # TF-IDF 特征提取
-    hashingTF = HashingTF(inputCol="words", outputCol="rawFeatures", numFeatures=1000)
-    idf = IDF(inputCol="rawFeatures", outputCol="features")
+    print("构建TF-IDF模型...")
+    hashingTF = HashingTF(inputCol="words", outputCol="rawFeatures", numFeatures=2000)
+    idf = IDF(inputCol="rawFeatures", outputCol="features", minDocFreq=5)
 
-    # 训练朴素贝叶斯模型
-    print("Training NaiveBayes model...")
+    print("训练朴素贝叶斯模型...")
     nb_classifier = NaiveBayes(labelCol="label", featuresCol="features", modelType="multinomial")
-
-    # 构建训练管道
     pipeline = Pipeline(stages=[hashingTF, idf, nb_classifier])
 
-    # 检查sentiment_dict_df是否有足够的数据
     if sentiment_dict_df.count() == 0:
-        raise ValueError("情感词典数据为空，无法训练分类器。请检查{}文件。")
+        raise ValueError(f"情感词典数据为空，无法训练分类器。请检查{SENTIMENT_DICT_PATH}文件。")
+#样本性能决定性因素1
+    sample_fraction = 0.02
+    sampled_sentiment_df = sentiment_dict_df.sample(withReplacement=False, fraction=sample_fraction, seed=42)
+    print(f"样本 {sample_fraction*100}% 情感词典数据. 样本大小: {sampled_sentiment_df.count()}")
 
-    # --- 关键修改：首先从整个情感词典中随机抽取 10% 的内容 ---
-    # fraction=0.1 表示大约抽取 10% 的行
-    # withReplacement=False 表示无放回抽样
-    # seed=42 确保可重现性
-    sampled_sentiment_df = sentiment_dict_df.sample(withReplacement=False, fraction=0.02, seed=42)
-    print(f"Sampled 10% of sentiment dictionary data. Sampled size: {sampled_sentiment_df.count()}")
-
-    # --- 接着，在这 10% 的抽样数据中划分训练集和测试集 ---
-    # 假设在这 10% 的数据中，我们按 80/20 比例划分训练集和测试集
     (trainingData, testData) = sampled_sentiment_df.randomSplit([0.8, 0.2], seed=42)
+    trainingData.cache()
+    testData.cache()
+    trainingData.count()
+    testData.count()
 
-    print(f"Training data size (from 10% sample): {trainingData.count()}")
-    print(f"Test data size (from 10% sample): {testData.count()}")
+    print(f"Training data size (from {sample_fraction*100}% 样本): {trainingData.count()}")
+    print(f"Test data size (from {sample_fraction*100}% 样本): {testData.count()}")
 
-    # 训练模型
-    model = pipeline.fit(trainingData)  # 使用 trainingData 来拟合模型
-    print("NaiveBayes model trained.")
+    model = pipeline.fit(trainingData)
+    print("朴素贝叶斯模型训练.")
 
-    # 应用模型到舆情数据
-    print("Applying sentiment model to public opinion data...")
+    print("将情感模型应用于舆情数据...")
     sentiment_predicted_df = model.transform(public_opinion_df)
-
     sentiment_predicted_df = sentiment_predicted_df.withColumn("predicted_sentiment",
                                                                col("prediction").cast(IntegerType()))
+    sentiment_predicted_df.cache()
+    sentiment_predicted_df.count()
 
-    print("Sentiment analysis complete. Sample results:")
+    print("情绪分析完成. 样本结果:")
     sentiment_predicted_df.select("content_text", "predicted_sentiment").show(5, truncate=False)
 
-    return sentiment_predicted_df, model, testData  # 返回测试集供后续评估使用
+    trainingData.unpersist()
+    testData.unpersist()
+    sentiment_dict_df.unpersist()
+
+    return sentiment_predicted_df, model, testData
 
 
 # --- 3. 算法评估 ---
-
-# 评估函数现在直接接收测试集
 def evaluate_sentiment_model(model, testData):
-    print("Evaluating sentiment classification model on test data...")
+    print("基于测试数据的情感分类模型评估...")
 
-    # 在测试集上进行预测
     predictions = model.transform(testData)
+    predictions.cache()
 
-    # 评估器
     evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction", metricName="accuracy")
     accuracy = evaluator.evaluate(predictions)
 
@@ -211,7 +211,7 @@ def evaluate_sentiment_model(model, testData):
 
     evaluation_results = {
         "model_type": "NaiveBayes Classifier",
-        "evaluation_dataset_size": testData.count(),  # 评估数据集大小是测试集大小
+        "evaluation_dataset_size": testData.count(),
         "metrics": {
             "accuracy": accuracy,
             "precision": precision,
@@ -219,25 +219,24 @@ def evaluate_sentiment_model(model, testData):
             "f1_score": f1_score
         }
     }
+    predictions.unpersist()
     return evaluation_results
 
 
 # --- 4. 舆情趋势预测 (示例：基于每日情感分布的简单预测) ---
-
 def predict_public_opinion_trend(sentiment_predicted_df):
-    print("Predicting public opinion trend...")
-    # 聚合每日情感数据
+    print("预测舆论趋势...")
     daily_sentiment_summary = sentiment_predicted_df.groupBy("created_date", "predicted_sentiment") \
         .agg(count("*").alias("count")) \
         .orderBy("created_date", "predicted_sentiment")
 
-    # 枢轴操作，将情感转换为列，方便时间序列分析
     daily_pivot_df = daily_sentiment_summary.groupBy("created_date") \
         .pivot("predicted_sentiment", [0, 1]) \
         .sum("count") \
         .na.fill(0) \
-        .orderBy("created_date") \
-        .cache()
+        .orderBy("created_date")
+    daily_pivot_df.cache()
+    daily_pivot_df.count()
 
     daily_pivot_df = daily_pivot_df.withColumnRenamed("0", "negative_count") \
         .withColumnRenamed("1", "positive_count")
@@ -246,114 +245,144 @@ def predict_public_opinion_trend(sentiment_predicted_df):
 
     from pyspark.ml.regression import LinearRegression
     from pyspark.ml.feature import VectorAssembler
-    from pyspark.sql.functions import when
 
     daily_pivot_df = daily_pivot_df.withColumn("id", monotonically_increasing_id())
 
     assembler = VectorAssembler(inputCols=["id"], outputCol="features")
     lr_data = assembler.transform(daily_pivot_df)
+    lr_data.cache()
+    lr_data.count()
 
-    lr_model = LinearRegression(featuresCol="features", labelCol="positive_count", regParam=0.01)  # 添加 regParam
+    lr_model = LinearRegression(featuresCol="features", labelCol="positive_count", regParam=0.01)
     lr_model_fit = lr_model.fit(lr_data)
 
-    print("Linear Regression model trained for positive sentiment trend.")
+    print("为积极情绪趋势训练的线性回归模型.")
 
-    max_date = daily_pivot_df.selectExpr("max(created_date)").collect()[0][0]
+    max_date_row = daily_pivot_df.agg({"created_date": "max"}).collect()[0]
+    max_date = max_date_row["max(created_date)"] if max_date_row and max_date_row["max(created_date)"] else date.today()
 
-    from datetime import date, timedelta
+    max_id_row = daily_pivot_df.agg({"id": "max"}).collect()[0]
+    max_id = max_id_row["max(id)"] if max_id_row and max_id_row["max(id)"] else 0
+
     future_dates = []
-    max_id = daily_pivot_df.selectExpr("max(id)").collect()[0][0]
-    for i in range(1, 8):  # 预测未来7天
+    for i in range(1, 8):
         future_dates.append((max_date + timedelta(days=i), float(i + max_id)))
 
     future_df = spark.createDataFrame(future_dates, ["created_date", "id"])
     future_df = assembler.transform(future_df)
+    future_df.cache()
+    future_df.count()
 
     future_predictions = lr_model_fit.transform(future_df)
 
     future_predictions = future_predictions.withColumn(
         "prediction",
-        when(col("prediction") < 0, 0).otherwise(col("prediction"))
+        when(col("prediction") < 0, 0).otherwise(col("prediction")).cast(IntegerType())
     )
 
-    print("Future trend predictions (positive sentiment count):")
+    print("未来趋势预测(积极情绪计数):")
     future_predictions.select("created_date", "prediction").show(truncate=False)
 
-    # 转换为ECharts所需的x_data和series_data格式
-    trend_x_data = [row["date"] for row in
-                    future_predictions.select(date_format(col("created_date"), "yyyy-MM-dd").alias("date")).collect()]
-    trend_series_data = [round(row["predicted_positive_count"]) for row in
-                         future_predictions.select(col("prediction").alias("predicted_positive_count")).collect()]
+    trend_predictions_df = future_predictions.select(
+        date_format(col("created_date"), "yyyy-MM-dd").alias("date"),
+        col("prediction").alias("predicted_positive_count")
+    )
 
-    trend_results = {
-        "x_data": trend_x_data,
-        "series_data": trend_series_data,
-        "series_name": "Predicted Positive Sentiment Trend"
-    }
+    daily_pivot_df.unpersist()
+    lr_data.unpersist()
+    future_df.unpersist()
 
-    return trend_results, lr_model_fit
+    return trend_predictions_df, lr_model_fit
 
 
-# --- 5. 结果汇总与存储 ---
+# --- 5. 结果汇总与存储 (优化：分批存储和最终合并) ---
+def store_results_optimized(sentiment_analysis_df, evaluation_results, trend_predictions_df, nb_model, lr_model):
+    print(f"将所有结果存储到一个JSON文件中 {FINAL_OUTPUT_JSON_PATH}...")
 
-def store_results(sentiment_analysis_df, evaluation_results, trend_predictions, lr_model):
-    print("Storing all results to a single HDFS JSON file...")
+    # 1. 保存模型到单独的文件夹
+    try:
+        nb_model_path = MODEL_SAVE_PATH + "naive_bayes_model"
+        lr_model_path = MODEL_SAVE_PATH + "linear_regression_model"
 
-    all_results = {}
+        # 确保模型保存目录存在（使用 Spark API）
+        hadoop_conf = sc._jsc.hadoopConfiguration()
+        fs = sc._jvm.org.apache.hadoop.fs.FileSystem.get(sc._jvm.java.net.URI(MODEL_SAVE_PATH), hadoop_conf)
+        model_save_path_obj = sc._jvm.org.apache.hadoop.fs.Path(MODEL_SAVE_PATH)
+        if not fs.exists(model_save_path_obj):
+            fs.mkdirs(model_save_path_obj) # 创建目录
 
-    # 1. 舆情内容分析结果
-    # 转换为列表字典，每个字典代表一条舆情内容
-    analysis_content_list = sentiment_analysis_df.select(
+        nb_model.save(nb_model_path)
+        print(f"NaiveBayes模型保存到 {nb_model_path}")
+
+        lr_model.save(lr_model_path)
+        print(f"线性回归模型保存到 {lr_model_path}")
+    except Exception as e:
+        print(f"保存模型时发生错误: {e}")
+        # 如果模型保存失败，不影响后续数据保存
+
+    # 2. 将舆情分析内容写入临时 HDFS 目录的 JSON part 文件
+    print(f"将舆情分析内容写入临时HDFS目录: {TEMP_ANALYSIS_JSON_DIR}")
+    analysis_content_to_write = sentiment_analysis_df.select(
         col("content_text").alias("content"),
-        date_format(col("created_date"), "yyyy-MM-dd").alias("date"),  # 格式化日期
+        date_format(col("created_date"), "yyyy-MM-dd").alias("date"),
         col("predicted_sentiment").alias("sentiment_label")
-    ).toPandas().to_dict(orient='records')  # 使用toPandas().to_dict()更方便转换为列表字典格式
-    all_results["public_opinion_analysis_content"] = analysis_content_list
+    )
+    # 不使用 coalesce(1) 来避免单点内存压力，让Spark生成多个part文件
+    analysis_content_to_write.write.mode("overwrite").json(TEMP_ANALYSIS_JSON_DIR)
+    print("舆情分析内容已写入临时JSON文件。")
 
-    # 2. 算法评估结果
-    all_results["algorithm_evaluation_metrics"] = evaluation_results
+    # 3. 将算法评估结果和趋势预测结果 collect 到 Driver
+    # 这些数据量通常较小，可以直接 collect
+    evaluation_results_list = evaluation_results # 已经是dict，无需转换
+    trend_predictions_list = trend_predictions_df.toJSON().map(json.loads).collect()
 
-    # 3. 舆情趋势预测结果 (已经过格式化)
-    all_results["public_opinion_trend_predictions"] = trend_predictions
-
-    # 4. （可选）添加其他需要展示的数据，例如：
-    # 假设你希望在前端展示每日情感统计的柱状图，类似于 part-00000 中的 posts_per_day
-    daily_sentiment_counts = sentiment_analysis_df.groupBy("created_date") \
-        .agg(
-        count(when(col("predicted_sentiment") == 1, 1)).alias("positive_count"),
-        count(when(col("predicted_sentiment") == 0, 1)).alias("negative_count")
-    ) \
-        .orderBy("created_date") \
-        .collect()
-
-    sentiment_over_time_x_data = [row["created_date"].strftime("%Y-%m-%d") for row in daily_sentiment_counts]
-    sentiment_over_time_positive_data = [row["positive_count"] for row in daily_sentiment_counts]
-    sentiment_over_time_negative_data = [row["negative_count"] for row in daily_sentiment_counts]
-
-    all_results["sentiment_over_time"] = {
-        "x_data": sentiment_over_time_x_data,
-        "series": [
-            {"name": "positive", "type": "line", "stack": "Total", "areaStyle": {},
-             "data": sentiment_over_time_positive_data},
-            {"name": "negative", "type": "line", "stack": "Total", "areaStyle": {},
-             "data": sentiment_over_time_negative_data}
-        ]
+    # 4. 读取临时目录下的JSON part文件内容，并在Driver端合并
+    # 这一步可能会有I/O开销，但避免了Driver端一次性加载所有RDD数据到内存
+    all_analysis_results = {
+        "public_opinion_analysis": [], # 留空，稍后从HDFS读取填充
+        "algorithm_evaluation": evaluation_results_list,
+        "public_opinion_trend_predictions": trend_predictions_list
     }
 
-    # 写入单个JSON文件到HDFS
-    output_json_path = OUTPUT_HDFS_PATH + "all_machine_learning_results.json"
+    # 读取临时JSON文件，逐行处理
+    print(f"从临时HDFS目录 {TEMP_ANALYSIS_JSON_DIR} 读取舆情分析内容并合并...")
+    try:
+        # 使用 sc.wholeTextFiles 获取所有part文件路径和内容
+        # wholeTextFiles 会将每个文件作为一个 (文件名, 文件内容) 的pair RDD返回
+        # 如果part文件非常多，这仍可能导致Driver端内存压力，但比直接collect所有DataFrame好
+        # 更优的方法是使用 sc.textFile(path).map(json.loads).collect()
+        # sc.textFile 会将每个文件视为多行文本，并每行一个元素地读取
+        json_lines_rdd = sc.textFile(TEMP_ANALYSIS_JSON_DIR)
+        for line in json_lines_rdd.collect(): # collect() 会将所有行拉到Driver
+            try:
+                all_analysis_results["public_opinion_analysis"].append(json.loads(line))
+            except json.JSONDecodeError as e:
+                print(f"解码JSON行失败: {line}, 错误: {e}")
 
-    # 将字典转换为JSON字符串
-    json_output_string = json.dumps(all_results, ensure_ascii=False, indent=2)
+        print(f"成功从临时文件中读取舆情分析内容。总行数: {len(all_analysis_results['public_opinion_analysis'])}")
 
-    # 将JSON字符串写入HDFS
-    # SparkContext 提供 textFile 和 saveAsTextFile 方法，但直接写入单个字符串需要一些技巧。
-    # 最直接的方法是将其转换为 RDD，然后保存。
-    # 或者，可以使用 HDFS API 来实现，但更符合Spark风格的是通过 RDD。
-    # 这里我们创建一个包含单个元素的RDD并保存。
-    spark.sparkContext.parallelize([json_output_string]).coalesce(1).saveAsTextFile(output_json_path)
+    except Exception as e:
+        print(f"处理临时文件时发生意外错误: {e}")
+        print("请检查HDFS路径和权限。如果错误持续，可能是数据量过大导致Driver内存不足。")
 
-    print(f"All machine learning results saved to: {output_json_path}")
+
+    # 5. 将最终的字典转换为JSON字符串，然后通过SparkContext写入单个文件
+    try:
+        final_json_string = json.dumps(all_analysis_results, ensure_ascii=False, indent=2) # indent=2 格式化输出
+
+        # 将单个JSON字符串作为RDD的单个元素写入HDFS，确保写入一个文件
+        # 先删除目标文件，否则saveAsTextFile会创建_SUCCESS文件
+        delete_hdfs_path_spark_api(FINAL_OUTPUT_JSON_PATH) # 确保删除整个目录，而不是只删除文件
+
+        sc.parallelize([final_json_string]).coalesce(1).saveAsTextFile(FINAL_OUTPUT_JSON_PATH)
+        print(f"所有结果已成功存储到 {FINAL_OUTPUT_JSON_PATH}。")
+    except Exception as e:
+        print(f"存储合并结果到最终JSON时发生错误: {e}")
+        print("警告：即使采取了分批写入，将所有结果在Driver端合并成一个JSON字符串仍可能导致内存溢出，尤其当public_opinion_analysis数据量极大时。")
+        print("如果发生内存溢出，请考虑放弃单个大JSON文件，转而存储为多个独立的文件（如Data_machinelearning.py）。")
+
+    # 清理临时目录
+    delete_hdfs_path_spark_api(TEMP_ANALYSIS_JSON_DIR)
 
 
 # --- 主执行流程 ---
@@ -363,22 +392,23 @@ if __name__ == "__main__":
         public_opinion_df, sentiment_dict_df = load_and_preprocess_data()
 
         # 2. 情感分类器训练与应用
-        # train_and_apply_sentiment_model 现在会返回测试集
         sentiment_predicted_df, nb_model, sentiment_test_data = train_and_apply_sentiment_model(public_opinion_df,
                                                                                                 sentiment_dict_df)
 
         # 3. 算法评估
-        # 评估函数现在使用返回的测试集进行评估
         evaluation_results = evaluate_sentiment_model(nb_model, sentiment_test_data)
 
         # 4. 舆情趋势预测
-        trend_predictions, lr_model = predict_public_opinion_trend(sentiment_predicted_df)
+        trend_predictions_df, lr_model = predict_public_opinion_trend(sentiment_predicted_df)
 
-        # 5. 结果汇总与存储
-        store_results(sentiment_predicted_df, evaluation_results, trend_predictions, lr_model)
+        # 5. 结果汇总与存储 (使用优化后的函数)
+        store_results_optimized(sentiment_predicted_df, evaluation_results, trend_predictions_df, nb_model, lr_model)
 
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
+        # 清除所有缓存数据
+        spark.catalog.clearCache()
+        # 停止SparkSession
         spark.stop()
         print("SparkSession stopped.")

@@ -238,6 +238,7 @@
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.0/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
 </head>
 <body class="bg-secondary min-h-screen">
     <nav class="fixed top-0 left-0 right-0 bg-white shadow-md z-50 px-8 py-3 flex items-center justify-between">
@@ -319,7 +320,7 @@
         </aside>
 
         <main class="main-content-container">
-            <h1 class="report-title">蜜雪冰城社交媒体数据 - 地域分析</h1>
+            <h1 class="report-title">社交媒体数据 - 地域分析</h1>
 
             <div id="error-message" class="error-message"></div>
 
@@ -332,7 +333,12 @@
                 <h2>按 IP 归属地分享总量</h2>
                 <div id="sharesByIpLocationChart" class="chart"></div>
             </div>
-            </main>
+
+            <div class="chart-card" style="grid-column: span 2; height: 600px;">
+                <h2>中国地域发帖热度图</h2>
+                <div id="chinaMapChart" class="chart"></div>
+            </div>
+        </main>
     </div>
 
     <script type="text/javascript">
@@ -347,6 +353,95 @@
 
         let ipLocationCountsChartInstance;
         let sharesByIpLocationChartInstance;
+        let chinaMapChart; // 声明中国地图图表实例变量
+        let globalAnalysisData = null; // 用于存储从Flask获取的全局数据
+
+        // 定义一个异步函数来加载地图数据并初始化地图图表
+        async function loadAndRegisterChinaMap() {
+            try {
+                // 核心改动：修改为本地china.json文件的相对路径
+                const response = await fetch('./echarts-4.2.1-rc1-map/json/china.json');
+                if (!response.ok) {
+                    throw new Error(`Failed to load china.json from local: ${response.status} ${response.statusText}. 请检查文件路径是否正确。`);
+                }
+                const chinaJson = await response.json();
+
+                // 注册地图到 ECharts
+                echarts.registerMap('china', chinaJson);
+                console.log('ECharts 中国地图已成功注册！');
+
+                // 现在可以安全地初始化中国地图
+                chinaMapChart = echarts.init(document.getElementById('chinaMapChart'));
+                // 将地图的 setOption 逻辑移动到这里
+                updateChinaMapChart(); // 调用一个新的函数来更新地图图表
+
+            } catch (error) {
+                console.error('加载或注册中国地图失败:', error);
+                displayError(`加载中国地图失败: ${error.message}。`);
+                // 如果地图加载失败，可以隐藏地图容器
+                document.getElementById('chinaMapChart').closest('.chart-card').style.display = 'none';
+            }
+        }
+
+        // 新增：用于更新中国地图图表数据的函数
+        function updateChinaMapChart() {
+            if (!chinaMapChart || !globalAnalysisData) {
+                console.warn('中国地图图表或数据未准备好，跳过更新。');
+                return;
+            }
+
+            const chinaMapData = globalAnalysisData.province_post_counts; // 从全局数据中获取地图数据
+
+            // 确保地图数据不为空，且有有效值，以便计算 max 值
+            const values = chinaMapData.map(item => item.value || 0);
+            const maxVal = values.length > 0 ? Math.max(...values) : 1;
+
+            chinaMapChart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}<br/>发帖量: {c}'
+                },
+                visualMap: {
+                    min: 0,
+                    max: maxVal,
+                    left: 'left',
+                    top: 'bottom',
+                    text: ['高', '低'],
+                    calculable: true,
+                    inRange: {
+                        color: ['#e0ffff', '#006edd']
+                    }
+                },
+                series: [
+                    {
+                        name: '发帖量',
+                        type: 'map',
+                        map: 'china',
+                        roam: false,
+                        label: {
+                            show: true,
+                            color: '#333',
+                            fontSize: 10
+                        },
+                        itemStyle: {
+                            areaColor: '#f3f3f3',
+                            borderColor: '#aaa'
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                color: '#fff'
+                            },
+                            itemStyle: {
+                                areaColor: '#2a5caa'
+                            }
+                        },
+                            data: chinaMapData
+                    }
+                ]
+            });
+        }
+
 
         function initRegionCharts(data) {
             setTimeout(() => {
@@ -416,7 +511,9 @@
                 })
                 .then(data => {
                     console.log('成功从 Flask 获取到的数据:', data);
-                    initRegionCharts(data);
+                    globalAnalysisData = data; // 存储全局数据
+                    initRegionCharts(data); // 初始化现有图表
+                    loadAndRegisterChinaMap(); // 异步加载并注册中国地图
                 })
                 .catch(error => {
                     console.error('获取数据时发生错误:', error);
@@ -450,6 +547,7 @@
         window.addEventListener('resize', function() {
             if (ipLocationCountsChartInstance) ipLocationCountsChartInstance.resize();
             if (sharesByIpLocationChartInstance) sharesByIpLocationChartInstance.resize();
+            if (chinaMapChart) chinaMapChart.resize(); // 新增地图图表resize
         });
     </script>
 </body>
