@@ -4,30 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="74ec5bc5-e16e-4afb-8b25-1caa1b540d31" name="更改" comment="新版">
-      <change afterPath="$PROJECT_DIR$/Test_case/MT.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Test_case/weibo_senti_100k.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Visual_data/处理.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/MarsCodeWorkspaceAppSettings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MarsCodeWorkspaceAppSettings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/charm.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/charm.iml" afterDir="false" />
+    <list default="true" id="74ec5bc5-e16e-4afb-8b25-1caa1b540d31" name="更改" comment="V1.0">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Data_Processing/Data_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data_Processing/Data_analysis.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Data_Processing/Data_machinelearning.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data_Processing/Data_machinelearning.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Data_Processing/Data_visualization.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data_Processing/Data_visualization.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Data_Processing/show_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data_Processing/show_data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Test_case/Test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Test_case/Test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Test_case/new_test.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Test_case/tt.html" beforeDir="false" afterPath="$PROJECT_DIR$/Test_case/tt.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface/flask_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/interface/flask_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface/new.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/new.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface/主页.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/主页.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface/事件分析.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/事件分析.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface/地域分析.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/地域分析.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface/性别分析.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/性别分析.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface/情感分析.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/情感分析.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface/机器学习及系统性能.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/机器学习及系统性能.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface/舆情报告.html" beforeDir="false" afterPath="$PROJECT_DIR$/interface/舆情报告.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visual_picture/content_wordcloud.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visual_picture/gender_distribution.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visual_picture/interaction_analysis.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visual_picture/location_distribution.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visual_picture/time_distribution.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -375,6 +358,8 @@
       <workItem from="1749353804870" duration="5817000" />
       <workItem from="1749388514929" duration="8432000" />
       <workItem from="1749432613701" duration="965000" />
+      <workItem from="1749611477097" duration="496000" />
+      <workItem from="1749630201878" duration="254000" />
     </task>
     <task id="LOCAL-00001" summary="新版">
       <option name="closed" value="true" />
@@ -400,7 +385,23 @@
       <option name="project" value="LOCAL" />
       <updated>1748860326993</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="V1.0">
+      <option name="closed" value="true" />
+      <created>1749611555973</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1749611555973</updated>
+    </task>
+    <task id="LOCAL-00005" summary="V1.0">
+      <option name="closed" value="true" />
+      <created>1749611649928</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1749611649928</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -414,7 +415,8 @@
       <path value="$PROJECT_DIR$" />
     </ignored-roots>
     <MESSAGE value="新版" />
-    <option name="LAST_COMMIT_MESSAGE" value="新版" />
+    <MESSAGE value="V1.0" />
+    <option name="LAST_COMMIT_MESSAGE" value="V1.0" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/charm$.coverage" NAME="处理 覆盖结果" MODIFIED="1749018222154" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Visual_data" />
