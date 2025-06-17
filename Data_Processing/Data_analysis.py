@@ -3,7 +3,6 @@ from pyspark.sql.functions import col, lit
 import os
 
 #步骤一
-
 # 使用spark前先将一级评论和二级评论上传至hdfs中
 #
 # 指令：

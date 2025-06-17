@@ -5,6 +5,7 @@ from pyspark.sql import SparkSession
 hdfs_processed_data_path = "hdfs://node01:8020/user/spark/Aprocessed_data"
 # --- 配置部分结束 ---
 
+
 def analyze_processed_data(input_path):
     """
     从HDFS读取处理后的数据并进行分析。

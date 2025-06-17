@@ -15,6 +15,7 @@ from datetime import date, timedelta
 import json
 
 
+
 # --- 环境变量设置 (保持不变，确保在所有节点上正确配置) ---
 os.environ['PYSPARK_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'
 os.environ['PYSPARK_DRIVER_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'

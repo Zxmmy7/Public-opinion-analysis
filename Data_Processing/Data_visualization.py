@@ -17,7 +17,6 @@ from collections import Counter
 
 
 
-
 # (现有的 PYSPARK_PYTHON 和 PYSPARK_DRIVER_PYTHON 设置不变)
 os.environ['PYSPARK_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'
 os.environ['PYSPARK_DRIVER_PYTHON'] = '/Axiangmu/huanjing/myenv/bin/python3.9'
